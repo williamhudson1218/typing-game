@@ -14,6 +14,7 @@ import { SpaceBar as SpaceBarIcon } from "@mui/icons-material";
 import { updateLessonStats } from "../utils/statsManager";
 import { findClosestMatch, suggestEmoji } from "../utils/emojiMap";
 import KeyboardKey from "./KeyboardKey";
+import Confetti from "react-confetti";
 
 const TypingStudio = () => {
   const { id } = useParams();
@@ -32,6 +33,7 @@ const TypingStudio = () => {
   const [bestSpeed, setBestSpeed] = useState(0);
   const [showFeedback, setShowFeedback] = useState(null);
   const [feedbackTimeout, setFeedbackTimeout] = useState(null);
+  const [showConfetti, setShowConfetti] = useState(false);
 
   console.log(streak);
 
@@ -200,6 +202,10 @@ const TypingStudio = () => {
       l.id === lesson.id ? { ...l, completed: true } : l
     );
     localStorage.setItem("lessons", JSON.stringify(updatedLessons));
+
+    setShowConfetti(true);
+    setTimeout(() => setShowConfetti(false), 5000);
+
     setCompleted(true);
   };
 
@@ -251,6 +257,16 @@ const TypingStudio = () => {
 
   return (
     <Box sx={{ p: 4, maxWidth: 800, mx: "auto" }}>
+      {showConfetti && (
+        <Confetti
+          width={window.innerWidth}
+          height={window.innerHeight}
+          recycle={false}
+          numberOfPieces={200}
+          gravity={0.3}
+        />
+      )}
+
       <Typography variant="h4" component="h2" gutterBottom>
         {lesson.title}
       </Typography>
