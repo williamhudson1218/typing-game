@@ -1,24 +1,40 @@
-import logo from './logo.svg';
-import './App.css';
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Menu from "./components/Menu";
+import Lessons from "./components/Lessons";
+import AddLesson from "./components/AddLesson";
+import TypingStudio from "./components/TypingStudio";
+import EditLesson from "./components/EditLesson";
+import ProgressTracker from "./components/ProgressTracker";
+import Achievements from "./components/Achievements";
+import Settings from "./components/Settings";
+import "./styles.css";
+import { ThemeProvider } from "@mui/material/styles";
+import CssBaseline from "@mui/material/CssBaseline";
+import theme from "./theme";
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Router>
+        <div className="App">
+          <Menu />
+          <div className="main-content">
+            <Routes>
+              <Route path="/lessons" element={<Lessons />} />
+              <Route path="/add-lesson" element={<AddLesson />} />
+              <Route path="/lesson/:id" element={<TypingStudio />} />
+              <Route path="/edit-lesson/:id" element={<EditLesson />} />
+              <Route path="/progress" element={<ProgressTracker />} />
+              <Route path="/achievements" element={<Achievements />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/" element={<Lessons />} />
+            </Routes>
+          </div>
+        </div>
+      </Router>
+    </ThemeProvider>
   );
 }
 
