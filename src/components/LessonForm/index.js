@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useCallback } from "react";
 import {
   Box,
   TextField,
@@ -11,8 +11,10 @@ import {
   ListItem,
   ListItemText,
   Chip,
+  Popover,
 } from "@mui/material";
 import { Edit as EditIcon } from "@mui/icons-material";
+import EmojiPicker from "emoji-picker-react";
 import KeyboardKey from "../KeyboardKey";
 
 const LessonForm = ({
@@ -32,31 +34,44 @@ const LessonForm = ({
   onCancel,
   submitButtonText,
 }) => {
-  const handleEmojiSelect = (word) => {
-    const input = document.createElement("input");
-    input.style.position = "fixed";
-    input.style.right = "0";
-    input.style.top = "0";
-    input.style.opacity = "0";
-    document.body.appendChild(input);
-    input.focus();
+  const [emojiPickerState, setEmojiPickerState] = useState({
+    isOpen: false,
+    anchorEl: null,
+    selectedWord: null,
+  });
 
-    const cleanup = () => {
-      document.body.removeChild(input);
-      window.removeEventListener("emoji-click", handleEmojiClick);
-    };
+  const handleEmojiSelect = useCallback((word, event) => {
+    setEmojiPickerState({
+      isOpen: true,
+      anchorEl: event.currentTarget,
+      selectedWord: word,
+    });
+  }, []);
 
-    const handleEmojiClick = (event) => {
-      setWordEmojiMap((prev) => ({
-        ...prev,
-        [word]: event.detail.emoji,
-      }));
-      cleanup();
-    };
+  const handleEmojiClick = useCallback(
+    (emojiData) => {
+      if (emojiPickerState.selectedWord) {
+        setWordEmojiMap((prev) => ({
+          ...prev,
+          [emojiPickerState.selectedWord]: emojiData.emoji,
+        }));
+      }
+      setEmojiPickerState({
+        isOpen: false,
+        anchorEl: null,
+        selectedWord: null,
+      });
+    },
+    [emojiPickerState.selectedWord, setWordEmojiMap]
+  );
 
-    window.addEventListener("emoji-click", handleEmojiClick);
-    input.addEventListener("blur", cleanup);
-  };
+  const handleClose = useCallback(() => {
+    setEmojiPickerState({
+      isOpen: false,
+      anchorEl: null,
+      selectedWord: null,
+    });
+  }, []);
 
   return (
     <form onSubmit={onSubmit}>
@@ -146,12 +161,31 @@ const LessonForm = ({
                     <ListItemText primary={word} />
                     <Chip
                       label={wordEmojiMap[word] || "Select emoji"}
-                      onClick={() => handleEmojiSelect(word)}
+                      onClick={(event) => handleEmojiSelect(word, event)}
                       icon={<EditIcon />}
                     />
                   </ListItem>
                 ))}
             </List>
+            <Popover
+              id="emoji-popover"
+              open={emojiPickerState.isOpen}
+              anchorEl={emojiPickerState.anchorEl}
+              onClose={handleClose}
+              anchorOrigin={{
+                vertical: "bottom",
+                horizontal: "center",
+              }}
+              transformOrigin={{
+                vertical: "top",
+                horizontal: "center",
+              }}
+              sx={{ zIndex: 1300 }}
+            >
+              <Box sx={{ p: 1 }}>
+                <EmojiPicker onEmojiClick={handleEmojiClick} />
+              </Box>
+            </Popover>
           </Box>
         )}
 

@@ -29,6 +29,45 @@ errorSynth.volume.value = -6;
 // Initialize speech synthesis
 const speech = window.speechSynthesis;
 
+let maleVoice = null;
+
+// Helper function to configure male voice settings
+const configureMaleVoice = (utterance) => {
+  utterance.pitch = 0.3; // Much lower pitch
+  utterance.rate = 0.9; // Slightly slower
+  utterance.volume = 0.8;
+
+  if (maleVoice) {
+    utterance.voice = maleVoice;
+  }
+};
+
+// Initialize voices and wait for them to load
+const initVoices = () => {
+  const voices = window.speechSynthesis.getVoices();
+  // Try to find a deep male voice, prioritizing certain known voices
+  maleVoice = voices.find(
+    (voice) =>
+      voice.name.includes("Microsoft David") ||
+      voice.name.includes("Daniel") || // Safari male voice
+      voice.name.includes("Google UK English Male") ||
+      voice.name.includes("Fred") || // US male voice
+      (voice.name.toLowerCase().includes("male") && voice.lang.startsWith("en"))
+  );
+  console.log(
+    "Available voices:",
+    voices.map((v) => `${v.name} (${v.lang})`)
+  );
+  console.log("Selected voice:", maleVoice?.name);
+};
+
+// Set up voice loading
+if (window.speechSynthesis.onvoiceschanged !== undefined) {
+  window.speechSynthesis.onvoiceschanged = initVoices;
+} else {
+  initVoices(); // For browsers that don't support onvoiceschanged
+}
+
 const Sound = {
   playSuccess: () => {
     const pattern =
@@ -63,9 +102,7 @@ const Sound = {
 
     // Voice only for achievements
     const utterance = new SpeechSynthesisUtterance("Amazing!");
-    utterance.rate = 1.1;
-    utterance.pitch = 1.2;
-    utterance.volume = 0.8;
+    configureMaleVoice(utterance);
     speech.speak(utterance);
   },
 
@@ -89,10 +126,8 @@ const Sound = {
     });
 
     // Voice for streaks
-    const utterance = new SpeechSynthesisUtterance("Fantastic!");
-    utterance.rate = 1.2;
-    utterance.pitch = 1.3;
-    utterance.volume = 0.9;
+    const utterance = new SpeechSynthesisUtterance("Excellent!"); // Changed phrase
+    configureMaleVoice(utterance);
     speech.speak(utterance);
   },
 
@@ -121,9 +156,7 @@ const Sound = {
 
     // Voice for completion
     const utterance = new SpeechSynthesisUtterance("Well done!");
-    utterance.rate = 1;
-    utterance.pitch = 1.2;
-    utterance.volume = 1;
+    configureMaleVoice(utterance);
     speech.speak(utterance);
   },
 };

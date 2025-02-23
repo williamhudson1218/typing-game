@@ -34,9 +34,16 @@ const EditLesson = () => {
       const wordArray = words.trim().split(/\s+/);
       const newEmojiMap = {};
       wordArray.forEach((word) => {
-        newEmojiMap[word] = wordEmojiMap[word] || suggestEmoji(word) || "❓";
+        if (!wordEmojiMap[word]) {
+          newEmojiMap[word] = suggestEmoji(word) || "❓";
+        }
       });
-      setWordEmojiMap(newEmojiMap);
+      if (Object.keys(newEmojiMap).length > 0) {
+        setWordEmojiMap((prev) => ({
+          ...prev,
+          ...newEmojiMap,
+        }));
+      }
     }
   }, [words, isPictureMode, wordEmojiMap]);
 
