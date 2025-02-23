@@ -14,14 +14,21 @@ import CssBaseline from "@mui/material/CssBaseline";
 import theme from "./theme";
 
 function App() {
+  // Get basename from package.json homepage or default to '/'
+  const basename =
+    process.env.NODE_ENV === "production"
+      ? "/typing-game" // GitHub Pages repository name
+      : "/";
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Router>
+      <Router basename={basename}>
         <div className="App">
           <Menu />
           <div className="main-content">
             <Routes>
+              <Route path="/" element={<Lessons />} />
               <Route path="/lessons" element={<Lessons />} />
               <Route path="/add-lesson" element={<AddLesson />} />
               <Route path="/lesson/:id" element={<TypingStudio />} />
@@ -29,7 +36,6 @@ function App() {
               <Route path="/progress" element={<ProgressTracker />} />
               <Route path="/achievements" element={<Achievements />} />
               <Route path="/settings" element={<Settings />} />
-              <Route path="/" element={<Lessons />} />
             </Routes>
           </div>
         </div>

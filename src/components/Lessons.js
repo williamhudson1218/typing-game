@@ -101,7 +101,14 @@ const Lessons = () => {
                     <Button
                       onClick={() => navigate(`/lesson/${lesson.id}`)}
                       color={lesson.completed ? "secondary" : "primary"}
-                      sx={{ mr: 1 }}
+                      sx={{
+                        mr: 1,
+                        ...(lesson.completed && {
+                          "&:hover": {
+                            color: "white",
+                          },
+                        }),
+                      }}
                     >
                       {lesson.completed ? "Review" : "Start"}
                     </Button>
