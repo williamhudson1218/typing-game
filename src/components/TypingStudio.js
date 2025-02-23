@@ -12,11 +12,7 @@ import {
 } from "@mui/material";
 import { SpaceBar as SpaceBarIcon } from "@mui/icons-material";
 import { updateLessonStats } from "../utils/statsManager";
-import {
-  autoEmojiMap,
-  findClosestMatch,
-  suggestEmoji,
-} from "../utils/emojiMap";
+import { findClosestMatch, suggestEmoji } from "../utils/emojiMap";
 
 const TypingStudio = () => {
   const { id } = useParams();
@@ -35,6 +31,8 @@ const TypingStudio = () => {
   const [bestSpeed, setBestSpeed] = useState(0);
   const [showFeedback, setShowFeedback] = useState(null);
   const [feedbackTimeout, setFeedbackTimeout] = useState(null);
+
+  console.log(streak);
 
   const FEEDBACK = {
     STREAK: [

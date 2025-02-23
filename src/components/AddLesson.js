@@ -12,10 +12,9 @@ import {
   List,
   ListItem,
   ListItemText,
-  IconButton,
   Chip,
 } from "@mui/material";
-import { Add as AddIcon, Edit as EditIcon } from "@mui/icons-material";
+import { Edit as EditIcon } from "@mui/icons-material";
 import { suggestEmoji } from "../utils/emojiMap";
 
 const AddLesson = () => {
@@ -24,17 +23,6 @@ const AddLesson = () => {
   const [isPictureMode, setIsPictureMode] = useState(false);
   const [wordEmojiMap, setWordEmojiMap] = useState({});
   const navigate = useNavigate();
-
-  // Function to try getting emoji suggestions
-  const autoSuggestEmoji = (word) => {
-    const suggestion = suggestEmoji(word);
-    if (suggestion) {
-      setWordEmojiMap((prev) => ({
-        ...prev,
-        [word]: suggestion,
-      }));
-    }
-  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -80,7 +68,7 @@ const AddLesson = () => {
 
       setWordEmojiMap(newEmojiMap);
     }
-  }, [words, isPictureMode]);
+  }, [words, isPictureMode, wordEmojiMap]);
 
   const handleEmojiSelect = (word) => {
     // Open the native emoji picker

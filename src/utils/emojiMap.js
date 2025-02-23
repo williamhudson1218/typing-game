@@ -33,7 +33,6 @@ export const autoEmojiMap = {
   breakfast: "🍳",
 
   // Related clothing
-  shirt: "👕",
   pants: "👖",
   shoes: "👞",
   socks: "🧦",
