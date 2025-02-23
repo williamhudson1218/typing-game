@@ -13,7 +13,11 @@ import {
   Box,
   IconButton,
 } from "@mui/material";
-import { Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
+import {
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  Add as AddIcon,
+} from "@mui/icons-material";
 
 const Lessons = () => {
   const [lessons, setLessons] = useState([]);
@@ -120,10 +124,20 @@ const Lessons = () => {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={5} align="center">
-                  <Typography sx={{ py: 3, color: "text.secondary" }}>
-                    No lessons available. Click "Add New Lesson" to create one!
+                <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
+                  <Typography variant="h6" color="text.secondary" gutterBottom>
+                    No Lessons Yet
                   </Typography>
+                  <Typography color="text.secondary" sx={{ mb: 3 }}>
+                    Create your first typing lesson to get started!
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    onClick={() => navigate("/add-lesson")}
+                    startIcon={<AddIcon />}
+                  >
+                    Add New Lesson
+                  </Button>
                 </TableCell>
               </TableRow>
             )}
