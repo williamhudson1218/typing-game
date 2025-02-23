@@ -13,6 +13,7 @@ import {
 import { SpaceBar as SpaceBarIcon } from "@mui/icons-material";
 import { updateLessonStats } from "../utils/statsManager";
 import { findClosestMatch, suggestEmoji } from "../utils/emojiMap";
+import KeyboardKey from "./KeyboardKey";
 
 const TypingStudio = () => {
   const { id } = useParams();
@@ -271,9 +272,48 @@ const TypingStudio = () => {
         <Paper sx={{ p: 4 }}>
           <Box sx={{ position: "relative" }}>
             <FeedbackPopup feedback={showFeedback} />
+
+            {lesson.isKeyLocationMode && lesson.newLetters && (
+              <Box sx={{ mb: 4 }}>
+                <Typography variant="h6" gutterBottom>
+                  New Keys to Learn:
+                </Typography>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 2,
+                    justifyContent: "center",
+                    backgroundColor: "primary.50",
+                    p: 2,
+                    borderRadius: 2,
+                  }}
+                >
+                  {lesson.newLetters.map((letter, index) => (
+                    <Box
+                      key={index}
+                      sx={{
+                        opacity:
+                          letter === lesson.words[currentWordIndex][0]
+                            ? 1
+                            : 0.6,
+                        transition: "opacity 0.3s",
+                      }}
+                    >
+                      <KeyboardKey letter={letter} />
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+            )}
+
             <Box sx={{ mb: 4 }}>
               <Typography variant="h6" gutterBottom>
-                {lesson.isPictureMode ? "Type what you see:" : "Current Word:"}
+                {lesson.isPictureMode
+                  ? "Type what you see:"
+                  : lesson.isKeyLocationMode
+                  ? "Practice typing:"
+                  : "Current Word:"}
               </Typography>
               {lesson.isPictureMode ? (
                 <Box

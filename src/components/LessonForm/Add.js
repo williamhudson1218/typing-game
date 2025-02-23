@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Box, Typography, Paper } from "@mui/material";
-import { suggestEmoji } from "../utils/emojiMap";
-import LessonForm from "./LessonForm";
+import { suggestEmoji } from "../../utils/emojiMap";
+import LessonForm from "./index";
 
 const AddLesson = () => {
   const navigate = useNavigate();
