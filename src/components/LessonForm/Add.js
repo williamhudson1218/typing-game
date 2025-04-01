@@ -10,6 +10,7 @@ const AddLesson = () => {
   const [words, setWords] = useState("");
   const [isPictureMode, setIsPictureMode] = useState(false);
   const [isKeyLocationMode, setIsKeyLocationMode] = useState(false);
+  const [isSentenceMode, setIsSentenceMode] = useState(false);
   const [wordEmojiMap, setWordEmojiMap] = useState({});
   const [newLetters, setNewLetters] = useState("");
 
@@ -33,7 +34,18 @@ const AddLesson = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const wordArray = words.trim().split(/\s+/);
+
+    let wordArray;
+    if (isSentenceMode) {
+      wordArray = words
+        .trim()
+        .split(/\n+/)
+        .map((sentence) => sentence.trim())
+        .filter((sentence) => sentence.length > 0);
+    } else {
+      wordArray = words.trim().split(/\s+/);
+    }
+
     const lessons = JSON.parse(localStorage.getItem("lessons")) || [];
 
     const newLesson = {
@@ -42,6 +54,7 @@ const AddLesson = () => {
       words: wordArray,
       isPictureMode,
       isKeyLocationMode,
+      isSentenceMode,
       newLetters: isKeyLocationMode ? newLetters.trim().split("") : [],
       emojiMap: isPictureMode ? wordEmojiMap : {},
       completed: false,
@@ -67,6 +80,8 @@ const AddLesson = () => {
           setIsPictureMode={setIsPictureMode}
           isKeyLocationMode={isKeyLocationMode}
           setIsKeyLocationMode={setIsKeyLocationMode}
+          isSentenceMode={isSentenceMode}
+          setIsSentenceMode={setIsSentenceMode}
           wordEmojiMap={wordEmojiMap}
           setWordEmojiMap={setWordEmojiMap}
           newLetters={newLetters}

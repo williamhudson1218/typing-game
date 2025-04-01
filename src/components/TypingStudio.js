@@ -34,6 +34,7 @@ const TypingStudio = () => {
   const [showFeedback, setShowFeedback] = useState(null);
   const [feedbackTimeout, setFeedbackTimeout] = useState(null);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [typedCharacters, setTypedCharacters] = useState(0);
 
   console.log(streak);
 
@@ -81,28 +82,59 @@ const TypingStudio = () => {
 
   const handleInputChange = (e) => {
     const input = e.target.value;
-    const targetWord = lesson.words[currentWordIndex];
+    const targetWord = lesson.words[currentWordIndex].trim();
 
     if (!wordStartTime && input.length === 1) {
       setWordStartTime(Date.now());
     }
 
-    setShowSpaceHint(input === targetWord);
+    if (lesson.isSentenceMode) {
+      const trimmedInput = input.trimEnd();
+      setShowSpaceHint(trimmedInput === targetWord);
 
-    if (!targetWord.startsWith(input) && !input.endsWith(" ")) {
-      Sound.playError();
-      setIsError(true);
-      setTotalErrors(totalErrors + 1);
-      setWordErrors(wordErrors + 1);
+      if (
+        trimmedInput.length <= targetWord.length &&
+        targetWord.startsWith(trimmedInput)
+      ) {
+        setTypedCharacters(trimmedInput.length);
+      }
+
+      if (!targetWord.startsWith(trimmedInput)) {
+        Sound.playError();
+        setIsError(true);
+        setTotalErrors(totalErrors + 1);
+        setWordErrors(wordErrors + 1);
+      } else {
+        setIsError(false);
+      }
+
+      setUserInput(input);
+
+      if (input.endsWith("\n")) {
+        const submittedInput = input.trim();
+        if (submittedInput === targetWord) {
+          checkSentence(submittedInput);
+          setTypedCharacters(0);
+        }
+      }
     } else {
-      setIsError(false);
-    }
+      setShowSpaceHint(input === targetWord);
 
-    setUserInput(input);
+      if (!targetWord.startsWith(input) && !input.endsWith(" ")) {
+        Sound.playError();
+        setIsError(true);
+        setTotalErrors(totalErrors + 1);
+        setWordErrors(wordErrors + 1);
+      } else {
+        setIsError(false);
+      }
 
-    if (input.endsWith(" ")) {
-      setShowSpaceHint(false);
-      checkWord(input.trim());
+      setUserInput(input);
+
+      if (input.endsWith(" ")) {
+        setShowSpaceHint(false);
+        checkWord(input.trim());
+      }
     }
   };
 
@@ -118,6 +150,61 @@ const TypingStudio = () => {
     }, 1500);
 
     setFeedbackTimeout(timeout);
+  };
+
+  const checkSentence = (input) => {
+    const targetSentence = lesson.words[currentWordIndex];
+
+    if (input === targetSentence) {
+      const wordTime = (Date.now() - wordStartTime) / 1000;
+      const wordSpeed = (input.split(/\s+/).length * 60) / wordTime;
+      const wordAccuracy = Math.max(0, 100 - (wordErrors / input.length) * 100);
+
+      setStreak((prev) => {
+        const newStreak = prev + 1;
+        const streakFeedback = FEEDBACK.STREAK.find(
+          (f) => f.threshold === newStreak
+        );
+        if (streakFeedback) {
+          showFeedbackWithTimeout({
+            message: streakFeedback.message,
+            type: "streak",
+          });
+          Sound.playStreak();
+        } else {
+          Sound.playSuccess();
+        }
+        return newStreak;
+      });
+
+      if (wordSpeed > bestSpeed && wordSpeed >= 20 && bestSpeed !== 0) {
+        setBestSpeed(wordSpeed);
+        const speedFeedback = FEEDBACK.SPEED.find(
+          (f) => wordSpeed >= f.threshold && f.threshold > (bestSpeed || 0)
+        );
+        if (speedFeedback) {
+          showFeedbackWithTimeout({
+            message: speedFeedback.message,
+            type: "speed",
+          });
+          Sound.playAchievement();
+        }
+      }
+
+      setWordStartTime(null);
+      setWordErrors(0);
+
+      if (currentWordIndex === lesson.words.length - 1) {
+        handleLessonComplete(wordSpeed, wordAccuracy);
+      } else {
+        setCurrentWordIndex(currentWordIndex + 1);
+      }
+    } else {
+      setStreak(0);
+    }
+
+    setTypedCharacters(0);
+    setUserInput("");
   };
 
   const checkWord = (input) => {
@@ -251,6 +338,53 @@ const TypingStudio = () => {
     </Fade>
   );
 
+  const renderHighlightedSentence = (sentence) => {
+    if (!lesson.isSentenceMode) return sentence;
+
+    const words = sentence.split(" ");
+    let charCount = 0;
+    let currentWordIndex = -1;
+
+    for (let i = 0; i < words.length; i++) {
+      if (charCount + words[i].length >= typedCharacters) {
+        currentWordIndex = i;
+        break;
+      }
+      charCount += words[i].length + 1;
+    }
+
+    return (
+      <Box component="span">
+        {words.map((word, index) => {
+          const isComplete = index < currentWordIndex;
+          const isCurrent = index === currentWordIndex;
+
+          const space = index === words.length - 1 ? "" : " ";
+
+          return (
+            <Box
+              component="span"
+              key={index}
+              sx={{
+                color: isComplete
+                  ? "success.main"
+                  : isCurrent
+                  ? "primary.main"
+                  : "text.secondary",
+                fontWeight: isCurrent ? 600 : isComplete ? 500 : 400,
+                transition: "color 0.2s, font-weight 0.2s",
+                opacity: isCurrent ? 1 : isComplete ? 1 : 0.75,
+              }}
+            >
+              {word}
+              {space}
+            </Box>
+          );
+        })}
+      </Box>
+    );
+  };
+
   if (!lesson) return <Box sx={{ p: 4 }}>Loading...</Box>;
 
   const progress = (currentWordIndex / lesson.words.length) * 100;
@@ -329,6 +463,8 @@ const TypingStudio = () => {
                   ? "Type what you see:"
                   : lesson.isKeyLocationMode
                   ? "Practice typing:"
+                  : lesson.isSentenceMode
+                  ? "Type the sentence:"
                   : "Current Word:"}
               </Typography>
               {lesson.isPictureMode ? (
@@ -360,9 +496,13 @@ const TypingStudio = () => {
                     p: 2,
                     borderRadius: 1,
                     textAlign: "center",
+                    fontSize: lesson.isSentenceMode ? "1.25rem" : "1.5rem",
+                    lineHeight: lesson.isSentenceMode ? 1.5 : 1.2,
                   }}
                 >
-                  {lesson.words[currentWordIndex]}
+                  {lesson.isSentenceMode
+                    ? renderHighlightedSentence(lesson.words[currentWordIndex])
+                    : lesson.words[currentWordIndex]}
                 </Typography>
               )}
               {/* Hidden text for screen readers */}
@@ -378,9 +518,24 @@ const TypingStudio = () => {
                 fullWidth
                 value={userInput}
                 onChange={handleInputChange}
-                placeholder="Type the word above..."
+                placeholder={
+                  lesson.isSentenceMode
+                    ? "Type the sentence and press Enter..."
+                    : "Type the word above..."
+                }
                 error={isError}
                 autoFocus
+                multiline={lesson.isSentenceMode}
+                rows={lesson.isSentenceMode ? 2 : 1}
+                onKeyDown={(e) => {
+                  if (lesson.isSentenceMode && e.key === "Enter") {
+                    e.preventDefault();
+                    const trimmed = userInput.trim();
+                    if (trimmed === lesson.words[currentWordIndex]) {
+                      checkSentence(trimmed);
+                    }
+                  }
+                }}
                 sx={{
                   mb: 3,
                   animation: isError
@@ -409,7 +564,7 @@ const TypingStudio = () => {
                   sx={{
                     position: "absolute",
                     right: 16,
-                    top: "50%",
+                    top: lesson.isSentenceMode ? "25%" : "50%",
                     transform: "translateY(-50%)",
                     display: "flex",
                     alignItems: "center",
@@ -417,15 +572,9 @@ const TypingStudio = () => {
                     color: "primary.main",
                     animation: "pulse 1.5s infinite",
                     "@keyframes pulse": {
-                      "0%": {
-                        opacity: 1,
-                      },
-                      "50%": {
-                        opacity: 0.5,
-                      },
-                      "100%": {
-                        opacity: 1,
-                      },
+                      "0%": { opacity: 1 },
+                      "50%": { opacity: 0.5 },
+                      "100%": { opacity: 1 },
                     },
                   }}
                 >
@@ -444,10 +593,18 @@ const TypingStudio = () => {
                       gap: 0.5,
                     }}
                   >
-                    <SpaceBarIcon fontSize="small" />
-                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                      SPACE
-                    </Typography>
+                    {lesson.isSentenceMode ? (
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        ENTER
+                      </Typography>
+                    ) : (
+                      <>
+                        <SpaceBarIcon fontSize="small" />
+                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                          SPACE
+                        </Typography>
+                      </>
+                    )}
                   </Box>
                 </Box>
               </Fade>
@@ -456,7 +613,8 @@ const TypingStudio = () => {
             <Box sx={{ mb: 2 }}>
               <LinearProgress variant="determinate" value={progress} />
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                Progress: {currentWordIndex}/{lesson.words.length} words
+                Progress: {currentWordIndex}/{lesson.words.length}{" "}
+                {lesson.isSentenceMode ? "sentences" : "words"}
               </Typography>
             </Box>
           </Box>

@@ -26,6 +26,8 @@ const LessonForm = ({
   setIsPictureMode,
   isKeyLocationMode,
   setIsKeyLocationMode,
+  isSentenceMode,
+  setIsSentenceMode,
   wordEmojiMap,
   setWordEmojiMap,
   newLetters,
@@ -84,14 +86,17 @@ const LessonForm = ({
           fullWidth
         />
 
-        <Box sx={{ display: "flex", gap: 4 }}>
+        <Box sx={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
           <FormControlLabel
             control={
               <Switch
                 checked={isPictureMode}
                 onChange={(e) => {
                   setIsPictureMode(e.target.checked);
-                  if (e.target.checked) setIsKeyLocationMode(false);
+                  if (e.target.checked) {
+                    setIsKeyLocationMode(false);
+                    setIsSentenceMode(false);
+                  }
                 }}
               />
             }
@@ -103,11 +108,29 @@ const LessonForm = ({
                 checked={isKeyLocationMode}
                 onChange={(e) => {
                   setIsKeyLocationMode(e.target.checked);
-                  if (e.target.checked) setIsPictureMode(false);
+                  if (e.target.checked) {
+                    setIsPictureMode(false);
+                    setIsSentenceMode(false);
+                  }
                 }}
               />
             }
             label="Key Location Mode"
+          />
+          <FormControlLabel
+            control={
+              <Switch
+                checked={isSentenceMode}
+                onChange={(e) => {
+                  setIsSentenceMode(e.target.checked);
+                  if (e.target.checked) {
+                    setIsPictureMode(false);
+                    setIsKeyLocationMode(false);
+                  }
+                }}
+              />
+            }
+            label="Sentence Mode"
           />
         </Box>
 
@@ -124,14 +147,18 @@ const LessonForm = ({
         )}
 
         <TextField
-          label="Lesson Words"
+          label={isSentenceMode ? "Lesson Sentences" : "Lesson Words"}
           value={words}
           onChange={(e) => setWords(e.target.value)}
           required
           fullWidth
           multiline
-          rows={4}
-          helperText="Enter words separated by spaces"
+          rows={6}
+          helperText={
+            isSentenceMode
+              ? "Enter sentences separated by line breaks (Enter key)"
+              : "Enter words separated by spaces"
+          }
         />
 
         {isKeyLocationMode && newLetters && (

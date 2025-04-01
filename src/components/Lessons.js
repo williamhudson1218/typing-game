@@ -29,7 +29,9 @@ const Lessons = () => {
 
   const loadLessons = () => {
     const storedLessons = JSON.parse(localStorage.getItem("lessons")) || [];
-    setLessons(storedLessons);
+    // Sort lessons by id (creation date) in descending order
+    const sortedLessons = storedLessons.sort((a, b) => b.id - a.id);
+    setLessons(sortedLessons);
   };
 
   const handleDelete = (id) => {
