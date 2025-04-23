@@ -12,6 +12,7 @@ import {
   Typography,
   Box,
   IconButton,
+  Container,
 } from "@mui/material";
 import {
   Edit as EditIcon,
@@ -51,108 +52,130 @@ const Lessons = () => {
   };
 
   return (
-    <Box sx={{ p: 4, maxWidth: "100%" }}>
-      <Typography variant="h4" component="h2" gutterBottom>
-        My Lessons
-      </Typography>
+    <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+      {/* Fixed space for header */}
+      <Box sx={{ height: "64px" }}></Box>
 
-      <TableContainer component={Paper} sx={{ mt: 3 }}>
-        <Table sx={{ minWidth: 650 }}>
-          <TableHead>
-            <TableRow>
-              <TableCell>Lesson Name</TableCell>
-              <TableCell>Preview</TableCell>
-              <TableCell>Words</TableCell>
-              <TableCell>Type</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell align="right">Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {lessons.length > 0 ? (
-              lessons.map((lesson) => (
-                <TableRow key={lesson.id} hover>
-                  <TableCell>{lesson.title}</TableCell>
-                  <TableCell>{getPreviewWords(lesson.words)}</TableCell>
-                  <TableCell>{lesson.words.length} words</TableCell>
-                  <TableCell>
-                    {lesson.isPictureMode ? (
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+      <Container maxWidth="xl" sx={{ flexGrow: 1, py: 3 }}>
+        <Typography variant="h4" component="h2" gutterBottom sx={{ mt: 5 }}>
+          My Lessons
+        </Typography>
+
+        <TableContainer
+          component={Paper}
+          sx={{
+            mt: 3,
+            width: "100%",
+            maxWidth: "100%",
+            overflowX: "auto",
+          }}
+        >
+          <Table
+            sx={{
+              minWidth: 650,
+              width: "100%",
+            }}
+          >
+            <TableHead>
+              <TableRow>
+                <TableCell>Lesson Name</TableCell>
+                <TableCell>Preview</TableCell>
+                <TableCell>Words</TableCell>
+                <TableCell>Type</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell align="right">Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {lessons.length > 0 ? (
+                lessons.map((lesson) => (
+                  <TableRow key={lesson.id} hover>
+                    <TableCell>{lesson.title}</TableCell>
+                    <TableCell>{getPreviewWords(lesson.words)}</TableCell>
+                    <TableCell>{lesson.words.length} words</TableCell>
+                    <TableCell>
+                      {lesson.isPictureMode ? (
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
+                          <span>Pictures</span>
+                          <span role="img" aria-label="picture mode">
+                            🖼️
+                          </span>
+                        </Box>
+                      ) : (
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
+                          <span>Text</span>
+                          <span role="img" aria-label="text mode">
+                            📝
+                          </span>
+                        </Box>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {lesson.completed ? "Completed" : "In Progress"}
+                    </TableCell>
+                    <TableCell align="right">
+                      <Button
+                        onClick={() => navigate(`/lesson/${lesson.id}`)}
+                        color={lesson.completed ? "secondary" : "primary"}
+                        sx={{
+                          mr: 1,
+                          ...(lesson.completed && {
+                            "&:hover": {
+                              color: "white",
+                            },
+                          }),
+                        }}
                       >
-                        <span>Pictures</span>
-                        <span role="img" aria-label="picture mode">
-                          🖼️
-                        </span>
-                      </Box>
-                    ) : (
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        {lesson.completed ? "Review" : "Start"}
+                      </Button>
+                      <IconButton
+                        onClick={() => handleEdit(lesson.id)}
+                        color="primary"
+                        size="small"
                       >
-                        <span>Text</span>
-                        <span role="img" aria-label="text mode">
-                          📝
-                        </span>
-                      </Box>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {lesson.completed ? "Completed" : "In Progress"}
-                  </TableCell>
-                  <TableCell align="right">
+                        <EditIcon />
+                      </IconButton>
+                      <IconButton
+                        onClick={() => handleDelete(lesson.id)}
+                        color="error"
+                        size="small"
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
+                    <Typography
+                      variant="h6"
+                      color="text.secondary"
+                      gutterBottom
+                    >
+                      No Lessons Yet
+                    </Typography>
+                    <Typography color="text.secondary" sx={{ mb: 3 }}>
+                      Create your first typing lesson to get started!
+                    </Typography>
                     <Button
-                      onClick={() => navigate(`/lesson/${lesson.id}`)}
-                      color={lesson.completed ? "secondary" : "primary"}
-                      sx={{
-                        mr: 1,
-                        ...(lesson.completed && {
-                          "&:hover": {
-                            color: "white",
-                          },
-                        }),
-                      }}
+                      variant="contained"
+                      onClick={() => navigate("/add-lesson")}
+                      startIcon={<AddIcon />}
                     >
-                      {lesson.completed ? "Review" : "Start"}
+                      Add New Lesson
                     </Button>
-                    <IconButton
-                      onClick={() => handleEdit(lesson.id)}
-                      color="primary"
-                      size="small"
-                    >
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton
-                      onClick={() => handleDelete(lesson.id)}
-                      color="error"
-                      size="small"
-                    >
-                      <DeleteIcon />
-                    </IconButton>
                   </TableCell>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
-                  <Typography variant="h6" color="text.secondary" gutterBottom>
-                    No Lessons Yet
-                  </Typography>
-                  <Typography color="text.secondary" sx={{ mb: 3 }}>
-                    Create your first typing lesson to get started!
-                  </Typography>
-                  <Button
-                    variant="contained"
-                    onClick={() => navigate("/add-lesson")}
-                    startIcon={<AddIcon />}
-                  >
-                    Add New Lesson
-                  </Button>
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Container>
     </Box>
   );
 };

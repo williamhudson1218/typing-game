@@ -35,15 +35,33 @@ const Menu = () => {
   ];
 
   return (
-    <AppBar position="static" color="default" elevation={1}>
+    <AppBar
+      position="fixed"
+      color="default"
+      elevation={1}
+      sx={{
+        top: 0,
+        zIndex: (theme) => theme.zIndex.drawer + 1,
+      }}
+    >
       <Container maxWidth="xl">
-        <Toolbar disableGutters>
-          <Box sx={{ display: "flex", gap: 2 }}>
+        <Toolbar
+          disableGutters
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+          }}
+        >
+          {/* Desktop menu */}
+          <Box
+            sx={{
+              display: { xs: "none", sm: "flex" },
+              gap: 2,
+              justifyContent: "center",
+            }}
+          >
             {menuItems.map((item) => (
-              <Box
-                key={item.path}
-                sx={{ display: { xs: "none", sm: "block" } }}
-              >
+              <Box key={item.path}>
                 <Button
                   startIcon={item.icon}
                   onClick={() => navigate(item.path)}
@@ -62,7 +80,14 @@ const Menu = () => {
           </Box>
 
           {/* Mobile menu */}
-          <Box sx={{ display: { xs: "flex", sm: "none" }, gap: 1 }}>
+          <Box
+            sx={{
+              display: { xs: "flex", sm: "none" },
+              gap: 1,
+              justifyContent: "center",
+              width: "100%",
+            }}
+          >
             {menuItems.map((item) => (
               <IconButton
                 key={item.path}

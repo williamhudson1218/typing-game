@@ -97,18 +97,14 @@ const TypingStudio = () => {
         targetWord.startsWith(trimmedInput)
       ) {
         setTypedCharacters(trimmedInput.length);
-      }
-
-      if (!targetWord.startsWith(trimmedInput)) {
+        setIsError(false);
+        setUserInput(input);
+      } else {
         Sound.playError();
         setIsError(true);
         setTotalErrors(totalErrors + 1);
         setWordErrors(wordErrors + 1);
-      } else {
-        setIsError(false);
       }
-
-      setUserInput(input);
 
       if (input.endsWith("\n")) {
         const submittedInput = input.trim();
@@ -118,22 +114,23 @@ const TypingStudio = () => {
         }
       }
     } else {
-      setShowSpaceHint(input === targetWord);
+      if (input.endsWith(" ")) {
+        setShowSpaceHint(false);
+        if (input.trim() === targetWord) {
+          checkWord(input.trim());
+        }
+        return;
+      }
 
-      if (!targetWord.startsWith(input) && !input.endsWith(" ")) {
+      if (input.length <= targetWord.length && targetWord.startsWith(input)) {
+        setShowSpaceHint(input === targetWord);
+        setIsError(false);
+        setUserInput(input);
+      } else {
         Sound.playError();
         setIsError(true);
         setTotalErrors(totalErrors + 1);
         setWordErrors(wordErrors + 1);
-      } else {
-        setIsError(false);
-      }
-
-      setUserInput(input);
-
-      if (input.endsWith(" ")) {
-        setShowSpaceHint(false);
-        checkWord(input.trim());
       }
     }
   };
@@ -390,7 +387,14 @@ const TypingStudio = () => {
   const progress = (currentWordIndex / lesson.words.length) * 100;
 
   return (
-    <Box sx={{ p: 4, maxWidth: 800, mx: "auto" }}>
+    <Box
+      sx={{
+        p: 4,
+        width: "40vw", // Takes up 1/3 of viewport width
+        minWidth: "400px", // Minimum width of 200px
+        mx: "auto", // Centers the component
+      }}
+    >
       {showConfetti && (
         <Confetti
           width={window.innerWidth}
@@ -530,6 +534,7 @@ const TypingStudio = () => {
                 onKeyDown={(e) => {
                   if (lesson.isSentenceMode && e.key === "Enter") {
                     e.preventDefault();
+                    setShowSpaceHint(false);
                     const trimmed = userInput.trim();
                     if (trimmed === lesson.words[currentWordIndex]) {
                       checkSentence(trimmed);
@@ -595,7 +600,7 @@ const TypingStudio = () => {
                   >
                     {lesson.isSentenceMode ? (
                       <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        ENTER
+                        RETURN
                       </Typography>
                     ) : (
                       <>
