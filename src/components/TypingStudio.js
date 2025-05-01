@@ -35,6 +35,7 @@ const TypingStudio = () => {
   const [feedbackTimeout, setFeedbackTimeout] = useState(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [typedCharacters, setTypedCharacters] = useState(0);
+  const [allowMistakes, setAllowMistakes] = useState(true);
 
   console.log(streak);
 
@@ -73,6 +74,12 @@ const TypingStudio = () => {
   }, [id, navigate]);
 
   useEffect(() => {
+    // Load settings from localStorage
+    const settings = JSON.parse(localStorage.getItem("settings")) || {};
+    setAllowMistakes(settings.allowMistakes !== false); // Default to true if not set
+  }, []);
+
+  useEffect(() => {
     return () => {
       if (feedbackTimeout) {
         clearTimeout(feedbackTimeout);
@@ -104,6 +111,12 @@ const TypingStudio = () => {
         setIsError(true);
         setTotalErrors(totalErrors + 1);
         setWordErrors(wordErrors + 1);
+        if (!allowMistakes) {
+          // If mistakes are not allowed, prevent the incorrect input
+          setUserInput(userInput);
+          return;
+        }
+        setUserInput(input);
       }
 
       if (input.endsWith("\n")) {
@@ -131,6 +144,12 @@ const TypingStudio = () => {
         setIsError(true);
         setTotalErrors(totalErrors + 1);
         setWordErrors(wordErrors + 1);
+        if (!allowMistakes) {
+          // If mistakes are not allowed, prevent the incorrect input
+          setUserInput(userInput);
+          return;
+        }
+        setUserInput(input);
       }
     }
   };
