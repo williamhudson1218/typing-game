@@ -112,11 +112,7 @@ const Courses = () => {
     );
     if (courseLessons.length === 0) return 0;
 
-    const completedLessons = courseLessons.filter((lesson) => {
-      const progress =
-        JSON.parse(localStorage.getItem(`progress_${lesson.id}`)) || {};
-      return progress.completed;
-    });
+    const completedLessons = courseLessons.filter((lesson) => lesson.completed);
 
     return Math.round((completedLessons.length / courseLessons.length) * 100);
   };
@@ -127,11 +123,7 @@ const Courses = () => {
     );
     return {
       totalLessons: courseLessons.length,
-      completedLessons: courseLessons.filter((lesson) => {
-        const progress =
-          JSON.parse(localStorage.getItem(`progress_${lesson.id}`)) || {};
-        return progress.completed;
-      }).length,
+      completedLessons: courseLessons.filter((lesson) => lesson.completed).length,
     };
   };
 
@@ -244,7 +236,8 @@ const Courses = () => {
                               fontWeight="medium"
                               color="gray.700"
                             >
-                              {progress}%
+                              {stats.completedLessons}/{stats.totalLessons}{" "}
+                              lessons
                             </Text>
                           </Flex>
                           <Progress
@@ -253,6 +246,16 @@ const Courses = () => {
                             size="sm"
                             borderRadius="full"
                           />
+                          {stats.totalLessons > 0 && (
+                            <Text
+                              fontSize="xs"
+                              color="gray.500"
+                              mt={1}
+                              textAlign="right"
+                            >
+                              {progress}% complete
+                            </Text>
+                          )}
                         </Box>
 
                         {/* Stats */}
