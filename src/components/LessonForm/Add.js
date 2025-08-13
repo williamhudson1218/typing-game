@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Box,
   Container,
@@ -13,6 +13,8 @@ import LessonForm from "./index";
 
 const AddLesson = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const courseId = location.state?.courseId;
   const [title, setTitle] = useState("");
   const [words, setWords] = useState("");
   const [isPictureMode, setIsPictureMode] = useState(false);
@@ -20,6 +22,7 @@ const AddLesson = () => {
   const [isSentenceMode, setIsSentenceMode] = useState(false);
   const [wordEmojiMap, setWordEmojiMap] = useState({});
   const [newLetters, setNewLetters] = useState("");
+  const [selectedCourseId, setSelectedCourseId] = useState(courseId || null);
 
   useEffect(() => {
     if (isPictureMode && words) {
@@ -65,6 +68,7 @@ const AddLesson = () => {
       newLetters: isKeyLocationMode ? newLetters.trim().split("") : [],
       emojiMap: isPictureMode ? wordEmojiMap : {},
       completed: false,
+      courseId: selectedCourseId,
     };
 
     lessons.push(newLesson);
@@ -100,6 +104,8 @@ const AddLesson = () => {
               setWordEmojiMap={setWordEmojiMap}
               newLetters={newLetters}
               setNewLetters={setNewLetters}
+              courseId={selectedCourseId}
+              setCourseId={setSelectedCourseId}
               onSubmit={handleSubmit}
               onCancel={() => navigate("/lessons")}
               submitButtonText="Create Lesson"

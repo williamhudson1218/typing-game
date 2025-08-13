@@ -22,6 +22,7 @@ const EditLesson = () => {
   const [wordEmojiMap, setWordEmojiMap] = useState({});
   const [newLetters, setNewLetters] = useState("");
   const [debouncedWords, setDebouncedWords] = useState("");
+  const [selectedCourseId, setSelectedCourseId] = useState(null);
 
   useEffect(() => {
     const lessons = JSON.parse(localStorage.getItem("lessons")) || [];
@@ -36,6 +37,7 @@ const EditLesson = () => {
       setIsSentenceMode(lesson.isSentenceMode || false);
       setWordEmojiMap(lesson.emojiMap || {});
       setNewLetters(lesson.newLetters ? lesson.newLetters.join("") : "");
+      setSelectedCourseId(lesson.courseId || null);
     } else {
       navigate("/lessons");
     }
@@ -97,6 +99,7 @@ const EditLesson = () => {
             isSentenceMode,
             newLetters: isKeyLocationMode ? newLetters.trim().split("") : [],
             emojiMap: isPictureMode ? wordEmojiMap : {},
+            courseId: selectedCourseId,
           }
         : lesson
     );
@@ -133,6 +136,8 @@ const EditLesson = () => {
               setWordEmojiMap={setWordEmojiMap}
               newLetters={newLetters}
               setNewLetters={setNewLetters}
+              courseId={selectedCourseId}
+              setCourseId={setSelectedCourseId}
               onSubmit={handleSubmit}
               onCancel={() => navigate("/lessons")}
               submitButtonText="Save Changes"

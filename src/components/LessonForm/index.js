@@ -37,6 +37,8 @@ const LessonForm = ({
   setWordEmojiMap,
   newLetters,
   setNewLetters,
+  courseId,
+  setCourseId,
   onSubmit,
   onCancel,
   submitButtonText,
@@ -118,6 +120,35 @@ const LessonForm = ({
             size="lg"
             borderRadius="lg"
           />
+        </FormControl>
+
+        {/* Course Selection */}
+        <FormControl>
+          <FormLabel fontSize="lg" fontWeight="semibold">
+            Course (Optional)
+          </FormLabel>
+          <select
+            value={courseId || ""}
+            onChange={(e) => setCourseId(e.target.value ? parseInt(e.target.value) : null)}
+            style={{
+              padding: "12px 16px",
+              border: "1px solid #E2E8F0",
+              borderRadius: "8px",
+              fontSize: "16px",
+              backgroundColor: "white",
+              width: "100%",
+            }}
+          >
+            <option value="">No Course (Unassigned)</option>
+            {(() => {
+              const courses = JSON.parse(localStorage.getItem("courses")) || [];
+              return courses.map(course => (
+                <option key={course.id} value={course.id}>
+                  {course.title}
+                </option>
+              ));
+            })()}
+          </select>
         </FormControl>
 
         {/* Mode Switches */}

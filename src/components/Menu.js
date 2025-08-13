@@ -13,6 +13,7 @@ import {
 } from "@chakra-ui/react";
 import {
   FiHome,
+  FiBook,
   FiPlus,
   FiBarChart,
   FiAward,
@@ -27,7 +28,8 @@ const Menu = () => {
   const isActive = (path) => location.pathname === path;
 
   const menuItems = [
-    { path: "/", icon: FiHome, label: "Lessons" },
+    { path: "/", icon: FiBook, label: "Courses" },
+    { path: "/lessons", icon: FiHome, label: "Lessons" },
     { path: "/add-lesson", icon: FiPlus, label: "Add Lesson" },
     { path: "/progress", icon: FiBarChart, label: "Progress" },
     { path: "/achievements", icon: FiAward, label: "Achievements" },
