@@ -99,9 +99,11 @@ const Courses = () => {
     const settings = JSON.parse(localStorage.getItem("settings")) || {};
     const newSettings = { ...settings, currentCourseId: courseId };
     localStorage.setItem("settings", JSON.stringify(newSettings));
-    
+
     // Show a toast or feedback
-    alert("Course set as default! This will be the default filter on the lessons page.");
+    alert(
+      "Course set as default! This will be the default filter on the lessons page."
+    );
   };
 
   const getCourseProgress = (courseId) => {

@@ -223,15 +223,21 @@ const Settings = () => {
                 icon={FiBook}
                 type="select"
                 value={settings.currentCourseId || ""}
-                onChange={(value) => handleSettingChange("currentCourseId", value ? parseInt(value) : null)}
+                onChange={(value) =>
+                  handleSettingChange(
+                    "currentCourseId",
+                    value ? parseInt(value) : null
+                  )
+                }
                 options={(() => {
-                  const courses = JSON.parse(localStorage.getItem("courses")) || [];
+                  const courses =
+                    JSON.parse(localStorage.getItem("courses")) || [];
                   return [
                     { value: "", label: "All Lessons" },
-                    ...courses.map(course => ({
+                    ...courses.map((course) => ({
                       value: course.id.toString(),
-                      label: course.title
-                    }))
+                      label: course.title,
+                    })),
                   ];
                 })()}
                 colorScheme="blue"
