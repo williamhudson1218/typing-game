@@ -266,10 +266,10 @@ const Lessons = () => {
 
                       <Box>
                         <Text fontSize="sm" color="gray.500" mb={1}>
-                          Words
+                          {lesson.isSentenceMode ? "Sentences" : "Words"}
                         </Text>
                         <Text fontSize="lg" fontWeight="semibold">
-                          {lesson.words.length} words
+                          {lesson.words.length} {lesson.isSentenceMode ? "sentences" : "words"}
                         </Text>
                       </Box>
 

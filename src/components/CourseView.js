@@ -218,7 +218,7 @@ const CourseView = () => {
                             {lesson.title}
                           </Heading>
                           <Text color="gray.600" fontSize="sm" noOfLines={2}>
-                            {lesson.words.length} words
+                            {lesson.words.length} {lesson.isSentenceMode ? "sentences" : "words"}
                           </Text>
                         </Box>
                         <HStack spacing={2}>
