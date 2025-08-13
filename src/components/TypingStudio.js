@@ -22,6 +22,7 @@ import { updateLessonStats } from "../utils/statsManager";
 import { suggestEmoji } from "../utils/emojiMap";
 import KeyboardKey from "./KeyboardKey";
 import Confetti from "react-confetti";
+import Sound from "./Sound";
 
 const TypingStudio = () => {
   const { id } = useParams();
@@ -42,6 +43,7 @@ const TypingStudio = () => {
   const [feedbackTimeout, setFeedbackTimeout] = useState(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [allowMistakes, setAllowMistakes] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(true);
   const [wordCompleted, setWordCompleted] = useState(false);
   const [completedWordIndex, setCompletedWordIndex] = useState(-1);
   const [debouncedInput, setDebouncedInput] = useState("");
@@ -87,6 +89,7 @@ const TypingStudio = () => {
     // Load settings from localStorage
     const settings = JSON.parse(localStorage.getItem("settings")) || {};
     setAllowMistakes(settings.allowMistakes !== false); // Default to true if not set
+    setSoundEnabled(settings.sound !== false); // Default to true if not set
   }, []);
 
   useEffect(() => {
@@ -168,8 +171,8 @@ const TypingStudio = () => {
 
     if (isCorrect) {
       // Play correct sound
-      if (lesson.sound !== false) {
-        // Sound.playCorrect();
+      if (soundEnabled) {
+        Sound.playSuccess();
       }
 
       const newStreak = streak + 1;
@@ -211,8 +214,8 @@ const TypingStudio = () => {
       }
     } else {
       // Play error sound
-      if (lesson.sound !== false) {
-        // Sound.playError();
+      if (soundEnabled) {
+        Sound.playError();
       }
 
       setStreak(0);
