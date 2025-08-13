@@ -17,7 +17,7 @@ import {
   Icon,
   Badge,
 } from "@chakra-ui/react";
-import { FiArrowRight, FiCheck, FiCheckCircle } from "react-icons/fi";
+import { FiArrowLeft, FiCheck, FiCheckCircle } from "react-icons/fi";
 import { updateLessonStats } from "../utils/statsManager";
 import { suggestEmoji } from "../utils/emojiMap";
 import KeyboardKey from "./KeyboardKey";
@@ -184,6 +184,9 @@ const TypingStudio = () => {
       );
       if (streakFeedback) {
         showFeedbackMessage(streakFeedback.message);
+        if (soundEnabled) {
+          Sound.playStreak();
+        }
       }
 
       // Calculate speed for this word
@@ -192,6 +195,17 @@ const TypingStudio = () => {
         const wordSpeed = targetWord.length / 5 / (wordTime / 60); // WPM
         if (wordSpeed > bestSpeed) {
           setBestSpeed(wordSpeed);
+
+          // Check for speed milestones
+          const speedFeedback = FEEDBACK.SPEED.find(
+            (f) => wordSpeed >= f.threshold && bestSpeed < f.threshold
+          );
+          if (speedFeedback) {
+            showFeedbackMessage(speedFeedback.message);
+            if (soundEnabled) {
+              Sound.playAchievement();
+            }
+          }
         }
       }
 
@@ -241,6 +255,9 @@ const TypingStudio = () => {
       );
       if (streakFeedback) {
         showFeedbackMessage(streakFeedback.message);
+        if (soundEnabled) {
+          Sound.playStreak();
+        }
       }
 
       if (wordStartTime) {
@@ -248,6 +265,17 @@ const TypingStudio = () => {
         const wordSpeed = targetSentence.length / 5 / (wordTime / 60);
         if (wordSpeed > bestSpeed) {
           setBestSpeed(wordSpeed);
+
+          // Check for speed milestones
+          const speedFeedback = FEEDBACK.SPEED.find(
+            (f) => wordSpeed >= f.threshold && bestSpeed < f.threshold
+          );
+          if (speedFeedback) {
+            showFeedbackMessage(speedFeedback.message);
+            if (soundEnabled) {
+              Sound.playAchievement();
+            }
+          }
         }
       }
 
@@ -304,6 +332,11 @@ const TypingStudio = () => {
 
     setCompleted(true);
     setShowConfetti(true);
+
+    // Play completion sound
+    if (soundEnabled) {
+      Sound.playCompletion();
+    }
 
     toast({
       title: "Lesson Completed! 🎉",
@@ -414,7 +447,7 @@ const TypingStudio = () => {
             variant="ghost"
             size="sm"
             onClick={() => navigate("/lessons")}
-            leftIcon={<FiArrowRight transform="rotate(180deg)" />}
+            leftIcon={<FiArrowLeft />}
             color="gray.600"
             _hover={{ color: "brand.500" }}
             mb={2}
@@ -443,7 +476,7 @@ const TypingStudio = () => {
                   colorScheme="brand"
                   size="lg"
                   onClick={() => navigate("/lessons")}
-                  leftIcon={<FiArrowRight />}
+                  leftIcon={<FiArrowLeft />}
                   px={8}
                   py={6}
                   borderRadius="xl"
@@ -687,7 +720,7 @@ const TypingStudio = () => {
                           </Text>
                         ) : (
                           <>
-                            <Icon as={FiArrowRight} boxSize={3} />
+                            <Icon as={FiArrowLeft} boxSize={3} />
                             <Text fontSize="xs" fontWeight="medium">
                               SPACE
                             </Text>
