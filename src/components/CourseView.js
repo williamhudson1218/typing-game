@@ -23,9 +23,6 @@ import {
   AlertDialogOverlay,
   useDisclosure,
   Flex,
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
 } from "@chakra-ui/react";
 import {
   FiEdit,
@@ -122,19 +119,7 @@ const CourseView = () => {
 
   return (
     <Container maxW="container.xl" py={8}>
-      <VStack spacing={8} align="stretch">
-        {/* Breadcrumb */}
-        <Breadcrumb>
-          <BreadcrumbItem>
-            <BreadcrumbLink onClick={() => navigate("/courses")}>
-              Courses
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbItem isCurrentPage>
-            <BreadcrumbLink>{course.title}</BreadcrumbLink>
-          </BreadcrumbItem>
-        </Breadcrumb>
-
+      <VStack spacing={6} align="stretch">
         {/* Back Button */}
         <Box>
           <Button
@@ -147,31 +132,31 @@ const CourseView = () => {
           </Button>
         </Box>
 
-        {/* Header */}
-        <Box>
-          <Heading size="xl" mb={2} color="gray.800">
-            {course.title}
-          </Heading>
-          <Text color="gray.600" fontSize="lg" mb={4}>
-            {course.description}
-          </Text>
-          <HStack spacing={4}>
-            <Badge colorScheme="blue" variant="subtle">
-              {lessons.length} lessons
-            </Badge>
-            <Badge colorScheme="green" variant="subtle">
-              {
-                lessons.filter(
-                  (lesson) => getLessonProgress(lesson.id).completed
-                ).length
-              }{" "}
-              completed
-            </Badge>
-          </HStack>
-        </Box>
-
-        {/* Add Lesson Button */}
-        <Box>
+        {/* Header with Add Lesson Button */}
+        <Flex justify="space-between" align="start">
+          <Box flex="1">
+            <Heading size="xl" mb={2} color="gray.800">
+              {course.title}
+            </Heading>
+            <Text color="gray.600" fontSize="lg" mb={4}>
+              {course.description}
+            </Text>
+            <HStack spacing={4}>
+              <Badge colorScheme="blue" variant="subtle">
+                {lessons.length} lessons
+              </Badge>
+              <Badge colorScheme="green" variant="subtle">
+                {
+                  lessons.filter(
+                    (lesson) => getLessonProgress(lesson.id).completed
+                  ).length
+                }{" "}
+                completed
+              </Badge>
+            </HStack>
+          </Box>
+          
+          {/* Add Lesson Button */}
           <Button
             leftIcon={<FiPlus />}
             colorScheme="brand"
@@ -184,7 +169,7 @@ const CourseView = () => {
           >
             Add Lesson to Course
           </Button>
-        </Box>
+        </Flex>
 
         {/* Lessons Grid */}
         {lessons.length > 0 ? (
