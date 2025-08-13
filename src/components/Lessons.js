@@ -189,21 +189,21 @@ const Lessons = () => {
           >
             {getFilteredLessons().map((lesson) => (
               <GridItem key={lesson.id}>
-                                  <Card
-                    bg={bg}
-                    border="1px solid"
-                    borderColor={borderColor}
-                    borderRadius="xl"
-                    boxShadow="lg"
-                    transition="all 0.2s"
-                    _hover={{
-                      transform: "translateY(-4px)",
-                      boxShadow: "xl",
-                    }}
-                    h="100%"
-                    display="flex"
-                    flexDirection="column"
-                  >
+                <Card
+                  bg={bg}
+                  border="1px solid"
+                  borderColor={borderColor}
+                  borderRadius="xl"
+                  boxShadow="lg"
+                  transition="all 0.2s"
+                  _hover={{
+                    transform: "translateY(-4px)",
+                    boxShadow: "xl",
+                  }}
+                  h="100%"
+                  display="flex"
+                  flexDirection="column"
+                >
                   <CardHeader pb={2}>
                     <Flex align="center" justify="space-between">
                       <VStack align="start" spacing={1}>
@@ -231,12 +231,12 @@ const Lessons = () => {
                             </HStack>
                           </Badge>
                           <Badge
-                            colorScheme={lesson.completed ? "green" : "orange"}
+                            colorScheme={lesson.completed ? "green" : "gray"}
                             variant="subtle"
                             borderRadius="full"
                             px={3}
                           >
-                            {lesson.completed ? "Completed" : "In Progress"}
+                            {lesson.completed ? "Completed" : "Not Started"}
                           </Badge>
                           <Badge
                             colorScheme="gray"
@@ -256,7 +256,12 @@ const Lessons = () => {
                     </Flex>
                   </CardHeader>
 
-                  <CardBody pt={0} flex="1" display="flex" flexDirection="column">
+                  <CardBody
+                    pt={0}
+                    flex="1"
+                    display="flex"
+                    flexDirection="column"
+                  >
                     <VStack align="stretch" spacing={4} flex="1">
                       <Box>
                         <Text fontSize="sm" color="gray.500" mb={1}>

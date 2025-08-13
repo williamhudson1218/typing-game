@@ -94,8 +94,6 @@ const Courses = () => {
     navigate(`/course/${courseId}`);
   };
 
-
-
   const getCourseProgress = (courseId) => {
     const courseLessons = lessons.filter(
       (lesson) => lesson.courseId === courseId
@@ -189,7 +187,11 @@ const Courses = () => {
                               {course.title}
                             </Heading>
                             {isDefault && (
-                              <Badge colorScheme="brand" variant="solid" size="sm">
+                              <Badge
+                                colorScheme="brand"
+                                variant="solid"
+                                size="sm"
+                              >
                                 Current Course
                               </Badge>
                             )}
@@ -225,7 +227,12 @@ const Courses = () => {
                       </Flex>
                     </CardHeader>
 
-                    <CardBody pt={0} flex="1" display="flex" flexDirection="column">
+                    <CardBody
+                      pt={0}
+                      flex="1"
+                      display="flex"
+                      flexDirection="column"
+                    >
                       <VStack spacing={3} align="stretch" flex="1">
                         {/* Progress */}
                         <Box>
@@ -255,7 +262,9 @@ const Courses = () => {
                             textAlign="right"
                             minH="1rem"
                           >
-                            {stats.totalLessons > 0 ? `${progress}% complete` : " "}
+                            {stats.totalLessons > 0
+                              ? `${progress}% complete`
+                              : " "}
                           </Text>
                         </Box>
 
@@ -285,8 +294,6 @@ const Courses = () => {
                             View Course
                           </Button>
                         </Box>
-
-
                       </VStack>
                     </CardBody>
                   </Card>
