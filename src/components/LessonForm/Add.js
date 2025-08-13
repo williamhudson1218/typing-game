@@ -22,7 +22,14 @@ const AddLesson = () => {
   const [isSentenceMode, setIsSentenceMode] = useState(false);
   const [wordEmojiMap, setWordEmojiMap] = useState({});
   const [newLetters, setNewLetters] = useState("");
-  const [selectedCourseId, setSelectedCourseId] = useState(courseId || null);
+  const [selectedCourseId, setSelectedCourseId] = useState(null);
+
+  useEffect(() => {
+    // Set default course from settings or passed courseId
+    const settings = JSON.parse(localStorage.getItem("settings")) || {};
+    const defaultCourseId = courseId || settings.currentCourseId;
+    setSelectedCourseId(defaultCourseId);
+  }, [courseId]);
 
   useEffect(() => {
     if (isPictureMode && words) {

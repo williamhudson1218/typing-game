@@ -106,9 +106,9 @@ const CourseView = () => {
 
   const getLessonProgress = (lessonId) => {
     const lessons = JSON.parse(localStorage.getItem("lessons")) || [];
-    const lesson = lessons.find(l => l.id === lessonId);
+    const lesson = lessons.find((l) => l.id === lessonId);
     return {
-      completed: lesson ? lesson.completed : false
+      completed: lesson ? lesson.completed : false,
     };
   };
 

@@ -123,7 +123,8 @@ const Courses = () => {
     );
     return {
       totalLessons: courseLessons.length,
-      completedLessons: courseLessons.filter((lesson) => lesson.completed).length,
+      completedLessons: courseLessons.filter((lesson) => lesson.completed)
+        .length,
     };
   };
 
