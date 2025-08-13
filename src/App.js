@@ -1,5 +1,6 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { ChakraProvider } from "@chakra-ui/react";
 import Menu from "./components/Menu";
 import Lessons from "./components/Lessons";
 import AddLesson from "./components/LessonForm/Add";
@@ -9,8 +10,6 @@ import ProgressTracker from "./components/ProgressTracker";
 import Achievements from "./components/Achievements";
 import Settings from "./components/Settings";
 import "./styles.css";
-import { ThemeProvider } from "@mui/material/styles";
-import CssBaseline from "@mui/material/CssBaseline";
 import theme from "./theme";
 
 function App() {
@@ -21,8 +20,7 @@ function App() {
       : "/";
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
+    <ChakraProvider theme={theme}>
       <Router basename={basename}>
         <div className="App">
           <Menu />
@@ -40,7 +38,7 @@ function App() {
           </div>
         </div>
       </Router>
-    </ThemeProvider>
+    </ChakraProvider>
   );
 }
 

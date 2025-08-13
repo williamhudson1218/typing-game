@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Box, Typography, Paper } from "@mui/material";
+import {
+  Box,
+  Container,
+  Heading,
+  Text,
+  Card,
+  CardBody,
+} from "@chakra-ui/react";
 import { suggestEmoji } from "../../utils/emojiMap";
 import LessonForm from "./index";
 
@@ -11,17 +18,22 @@ const EditLesson = () => {
   const [words, setWords] = useState("");
   const [isPictureMode, setIsPictureMode] = useState(false);
   const [isKeyLocationMode, setIsKeyLocationMode] = useState(false);
+  const [isSentenceMode, setIsSentenceMode] = useState(false);
   const [wordEmojiMap, setWordEmojiMap] = useState({});
   const [newLetters, setNewLetters] = useState("");
+  const [debouncedWords, setDebouncedWords] = useState("");
 
   useEffect(() => {
     const lessons = JSON.parse(localStorage.getItem("lessons")) || [];
     const lesson = lessons.find((l) => l.id === parseInt(id));
     if (lesson) {
       setTitle(lesson.title);
-      setWords(lesson.words.join(" "));
+      setWords(
+        lesson.isSentenceMode ? lesson.words.join("\n") : lesson.words.join(" ")
+      );
       setIsPictureMode(lesson.isPictureMode || false);
       setIsKeyLocationMode(lesson.isKeyLocationMode || false);
+      setIsSentenceMode(lesson.isSentenceMode || false);
       setWordEmojiMap(lesson.emojiMap || {});
       setNewLetters(lesson.newLetters ? lesson.newLetters.join("") : "");
     } else {
@@ -29,12 +41,23 @@ const EditLesson = () => {
     }
   }, [id, navigate]);
 
+  // Debounce words input to avoid emoji lookup on every keystroke
   useEffect(() => {
-    if (isPictureMode && words) {
-      const wordArray = words.trim().split(/\s+/);
+    const timer = setTimeout(() => {
+      setDebouncedWords(words);
+    }, 2000); // 2 second delay to ensure no typing interference
+
+    return () => clearTimeout(timer);
+  }, [words]);
+
+  // Optimized emoji lookup with better performance
+  useEffect(() => {
+    if (isPictureMode && debouncedWords) {
+      const wordArray = debouncedWords.trim().split(/\s+/);
       const newEmojiMap = {};
       wordArray.forEach((word) => {
-        if (!wordEmojiMap[word]) {
+        // Only auto-assign emojis for words that don't already have them
+        if (word && !wordEmojiMap[word]) {
           newEmojiMap[word] = suggestEmoji(word) || "❓";
         }
       });
@@ -45,11 +68,22 @@ const EditLesson = () => {
         }));
       }
     }
-  }, [words, isPictureMode, wordEmojiMap]);
+  }, [debouncedWords, isPictureMode, wordEmojiMap]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const wordArray = words.trim().split(/\s+/);
+
+    let wordArray;
+    if (isSentenceMode) {
+      wordArray = words
+        .trim()
+        .split(/\n+/)
+        .map((sentence) => sentence.trim())
+        .filter((sentence) => sentence.length > 0);
+    } else {
+      wordArray = words.trim().split(/\s+/);
+    }
+
     const lessons = JSON.parse(localStorage.getItem("lessons")) || [];
 
     const updatedLessons = lessons.map((lesson) =>
@@ -60,6 +94,7 @@ const EditLesson = () => {
             words: wordArray,
             isPictureMode,
             isKeyLocationMode,
+            isSentenceMode,
             newLetters: isKeyLocationMode ? newLetters.trim().split("") : [],
             emojiMap: isPictureMode ? wordEmojiMap : {},
           }
@@ -67,34 +102,45 @@ const EditLesson = () => {
     );
 
     localStorage.setItem("lessons", JSON.stringify(updatedLessons));
+
     navigate("/lessons");
   };
 
   return (
-    <Box sx={{ p: 4, maxWidth: 800, mx: "auto" }}>
-      <Typography variant="h4" component="h2" gutterBottom>
-        Edit Lesson
-      </Typography>
-      <Paper sx={{ p: 4, mt: 3 }}>
-        <LessonForm
-          title={title}
-          setTitle={setTitle}
-          words={words}
-          setWords={setWords}
-          isPictureMode={isPictureMode}
-          setIsPictureMode={setIsPictureMode}
-          isKeyLocationMode={isKeyLocationMode}
-          setIsKeyLocationMode={setIsKeyLocationMode}
-          wordEmojiMap={wordEmojiMap}
-          setWordEmojiMap={setWordEmojiMap}
-          newLetters={newLetters}
-          setNewLetters={setNewLetters}
-          onSubmit={handleSubmit}
-          onCancel={() => navigate("/lessons")}
-          submitButtonText="Save Changes"
-        />
-      </Paper>
-    </Box>
+    <Container maxW="container.md" py={8}>
+      <Box>
+        <Heading size="xl" mb={2} color="gray.800">
+          Edit Lesson
+        </Heading>
+        <Text color="gray.600" fontSize="lg" mb={8}>
+          Modify your typing lesson settings and content
+        </Text>
+
+        <Card borderRadius="xl" boxShadow="lg">
+          <CardBody p={8}>
+            <LessonForm
+              title={title}
+              setTitle={setTitle}
+              words={words}
+              setWords={setWords}
+              isPictureMode={isPictureMode}
+              setIsPictureMode={setIsPictureMode}
+              isKeyLocationMode={isKeyLocationMode}
+              setIsKeyLocationMode={setIsKeyLocationMode}
+              isSentenceMode={isSentenceMode}
+              setIsSentenceMode={setIsSentenceMode}
+              wordEmojiMap={wordEmojiMap}
+              setWordEmojiMap={setWordEmojiMap}
+              newLetters={newLetters}
+              setNewLetters={setNewLetters}
+              onSubmit={handleSubmit}
+              onCancel={() => navigate("/lessons")}
+              submitButtonText="Save Changes"
+            />
+          </CardBody>
+        </Card>
+      </Box>
+    </Container>
   );
 };
 

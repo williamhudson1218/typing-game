@@ -1,24 +1,32 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import Sound from "./Sound";
 import {
   Box,
-  Typography,
-  Paper,
-  TextField,
+  Container,
+  Heading,
+  Text,
+  Input,
+  Textarea,
   Button,
-  LinearProgress,
-  Fade,
-} from "@mui/material";
-import { SpaceBar as SpaceBarIcon } from "@mui/icons-material";
+  Progress,
+  VStack,
+  HStack,
+  Card,
+  CardBody,
+  useToast,
+  Icon,
+  Badge,
+} from "@chakra-ui/react";
+import { FiArrowRight, FiCheck, FiCheckCircle } from "react-icons/fi";
 import { updateLessonStats } from "../utils/statsManager";
-import { findClosestMatch, suggestEmoji } from "../utils/emojiMap";
+import { suggestEmoji } from "../utils/emojiMap";
 import KeyboardKey from "./KeyboardKey";
 import Confetti from "react-confetti";
 
 const TypingStudio = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const toast = useToast();
   const [lesson, setLesson] = useState(null);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [userInput, setUserInput] = useState("");
@@ -28,16 +36,18 @@ const TypingStudio = () => {
   const [startTime, setStartTime] = useState(null);
   const [wordStartTime, setWordStartTime] = useState(null);
   const [totalErrors, setTotalErrors] = useState(0);
-  const [wordErrors, setWordErrors] = useState(0);
   const [streak, setStreak] = useState(0);
   const [bestSpeed, setBestSpeed] = useState(0);
   const [showFeedback, setShowFeedback] = useState(null);
   const [feedbackTimeout, setFeedbackTimeout] = useState(null);
   const [showConfetti, setShowConfetti] = useState(false);
-  const [typedCharacters, setTypedCharacters] = useState(0);
   const [allowMistakes, setAllowMistakes] = useState(true);
+  const [wordCompleted, setWordCompleted] = useState(false);
+  const [completedWordIndex, setCompletedWordIndex] = useState(-1);
+  const [debouncedInput, setDebouncedInput] = useState("");
 
-  console.log(streak);
+  const bg = "white";
+  const borderColor = "gray.200";
 
   const FEEDBACK = {
     STREAK: [
@@ -87,6 +97,15 @@ const TypingStudio = () => {
     };
   }, [feedbackTimeout]);
 
+  // Debounce input for highlighting to improve performance
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedInput(userInput);
+    }, 100); // 100ms delay
+
+    return () => clearTimeout(timer);
+  }, [userInput]);
+
   const handleInputChange = (e) => {
     const input = e.target.value;
     const targetWord = lesson.words[currentWordIndex].trim();
@@ -95,325 +114,287 @@ const TypingStudio = () => {
       setWordStartTime(Date.now());
     }
 
+    // Clear hint if user starts typing again after completing
+    if (showSpaceHint && input.length < targetWord.length) {
+      setShowSpaceHint(false);
+    }
+
+    // Clear hint if user makes an error
+    if (isError) {
+      setShowSpaceHint(false);
+    }
+
+    setUserInput(input);
+    setIsError(false);
+
+    // Clear hint if input is empty (user advanced to next word)
+    if (input === "") {
+      setShowSpaceHint(false);
+      return; // Don't process hint logic for empty input
+    }
+
     if (lesson.isSentenceMode) {
       const trimmedInput = input.trimEnd();
-      setShowSpaceHint(trimmedInput === targetWord);
 
-      if (
-        trimmedInput.length <= targetWord.length &&
-        targetWord.startsWith(trimmedInput)
-      ) {
-        setTypedCharacters(trimmedInput.length);
-        setIsError(false);
-        setUserInput(input);
-      } else {
-        Sound.playError();
-        setIsError(true);
-        setTotalErrors(totalErrors + 1);
-        setWordErrors(wordErrors + 1);
-        if (!allowMistakes) {
-          // If mistakes are not allowed, prevent the incorrect input
-          setUserInput(userInput);
-          return;
-        }
-        setUserInput(input);
-      }
+      // Only show hint when sentence is completely finished
+      const shouldShowHint = trimmedInput === targetWord;
 
-      if (input.endsWith("\n")) {
-        const submittedInput = input.trim();
-        if (submittedInput === targetWord) {
-          checkSentence(submittedInput);
-          setTypedCharacters(0);
-        }
-      }
-    } else {
-      if (input.endsWith(" ")) {
+      if (shouldShowHint && !showSpaceHint) {
+        // Add delay before showing hint
+        setTimeout(() => {
+          setShowSpaceHint(true);
+        }, 300);
+      } else if (!shouldShowHint) {
         setShowSpaceHint(false);
-        if (input.trim() === targetWord) {
-          checkWord(input.trim());
-        }
-        return;
-      }
-
-      if (input.length <= targetWord.length && targetWord.startsWith(input)) {
-        setShowSpaceHint(input === targetWord);
-        setIsError(false);
-        setUserInput(input);
-      } else {
-        Sound.playError();
-        setIsError(true);
-        setTotalErrors(totalErrors + 1);
-        setWordErrors(wordErrors + 1);
-        if (!allowMistakes) {
-          // If mistakes are not allowed, prevent the incorrect input
-          setUserInput(userInput);
-          return;
-        }
-        setUserInput(input);
-      }
-    }
-  };
-
-  const showFeedbackWithTimeout = (feedback) => {
-    setShowFeedback(feedback);
-
-    if (feedbackTimeout) {
-      clearTimeout(feedbackTimeout);
-    }
-
-    const timeout = setTimeout(() => {
-      setShowFeedback(null);
-    }, 1500);
-
-    setFeedbackTimeout(timeout);
-  };
-
-  const checkSentence = (input) => {
-    const targetSentence = lesson.words[currentWordIndex];
-
-    if (input === targetSentence) {
-      const wordTime = (Date.now() - wordStartTime) / 1000;
-      const wordSpeed = (input.split(/\s+/).length * 60) / wordTime;
-      const wordAccuracy = Math.max(0, 100 - (wordErrors / input.length) * 100);
-
-      setStreak((prev) => {
-        const newStreak = prev + 1;
-        const streakFeedback = FEEDBACK.STREAK.find(
-          (f) => f.threshold === newStreak
-        );
-        if (streakFeedback) {
-          showFeedbackWithTimeout({
-            message: streakFeedback.message,
-            type: "streak",
-          });
-          Sound.playStreak();
-        } else {
-          Sound.playSuccess();
-        }
-        return newStreak;
-      });
-
-      if (wordSpeed > bestSpeed && wordSpeed >= 20 && bestSpeed !== 0) {
-        setBestSpeed(wordSpeed);
-        const speedFeedback = FEEDBACK.SPEED.find(
-          (f) => wordSpeed >= f.threshold && f.threshold > (bestSpeed || 0)
-        );
-        if (speedFeedback) {
-          showFeedbackWithTimeout({
-            message: speedFeedback.message,
-            type: "speed",
-          });
-          Sound.playAchievement();
-        }
-      }
-
-      setWordStartTime(null);
-      setWordErrors(0);
-
-      if (currentWordIndex === lesson.words.length - 1) {
-        handleLessonComplete(wordSpeed, wordAccuracy);
-      } else {
-        setCurrentWordIndex(currentWordIndex + 1);
       }
     } else {
-      setStreak(0);
-    }
+      // Only show hint when word is completely finished
+      const shouldShowHint = input === targetWord;
 
-    setTypedCharacters(0);
-    setUserInput("");
+      if (shouldShowHint && !showSpaceHint) {
+        // Add delay before showing hint
+        setTimeout(() => {
+          setShowSpaceHint(true);
+        }, 300);
+      } else if (!shouldShowHint) {
+        setShowSpaceHint(false);
+      }
+    }
   };
 
   const checkWord = (input) => {
-    const targetWord = lesson.words[currentWordIndex];
-    const matchedWord =
-      lesson.isPictureMode && lesson.emojiMap
-        ? findClosestMatch(input, Object.keys(lesson.emojiMap))
-        : input;
+    const targetWord = lesson.words[currentWordIndex].trim();
+    const isCorrect = input.trim() === targetWord;
 
-    if (matchedWord === targetWord) {
-      const wordTime = (Date.now() - wordStartTime) / 1000;
-      const wordSpeed = 60 / wordTime;
-      const wordAccuracy = Math.max(0, 100 - (wordErrors / input.length) * 100);
+    if (isCorrect) {
+      // Play correct sound
+      if (lesson.sound !== false) {
+        // Sound.playCorrect();
+      }
 
-      setStreak((prev) => {
-        const newStreak = prev + 1;
-        const streakFeedback = FEEDBACK.STREAK.find(
-          (f) => f.threshold === newStreak
-        );
-        if (streakFeedback) {
-          showFeedbackWithTimeout({
-            message: streakFeedback.message,
-            type: "streak",
-          });
-          Sound.playStreak();
-        } else {
-          Sound.playSuccess();
-        }
-        return newStreak;
-      });
+      const newStreak = streak + 1;
+      setStreak(newStreak);
 
-      if (wordSpeed > bestSpeed && wordSpeed >= 20 && bestSpeed !== 0) {
-        setBestSpeed(wordSpeed);
-        const speedFeedback = FEEDBACK.SPEED.find(
-          (f) => wordSpeed >= f.threshold && f.threshold > (bestSpeed || 0)
-        );
-        if (speedFeedback) {
-          showFeedbackWithTimeout({
-            message: speedFeedback.message,
-            type: "speed",
-          });
-          Sound.playAchievement();
+      // Check for streak feedback
+      const streakFeedback = FEEDBACK.STREAK.find(
+        (f) => f.threshold === newStreak
+      );
+      if (streakFeedback) {
+        showFeedbackMessage(streakFeedback.message);
+      }
+
+      // Calculate speed for this word
+      if (wordStartTime) {
+        const wordTime = (Date.now() - wordStartTime) / 1000; // in seconds
+        const wordSpeed = targetWord.length / 5 / (wordTime / 60); // WPM
+        if (wordSpeed > bestSpeed) {
+          setBestSpeed(wordSpeed);
         }
       }
 
-      setWordStartTime(null);
-      setWordErrors(0);
+      // Trigger word completion animation
+      setWordCompleted(true);
+      setCompletedWordIndex(currentWordIndex);
 
-      if (currentWordIndex === lesson.words.length - 1) {
-        handleLessonComplete(wordSpeed, wordAccuracy);
-      } else {
-        setCurrentWordIndex(currentWordIndex + 1);
+      // Reset animation after a short delay
+      setTimeout(() => {
+        setWordCompleted(false);
+        setCompletedWordIndex(-1);
+      }, 300);
+
+      setCurrentWordIndex((prev) => prev + 1);
+      setUserInput("");
+      setWordStartTime(null);
+
+      if (currentWordIndex + 1 >= lesson.words.length) {
+        completeLesson();
+      }
+    } else {
+      // Play error sound
+      if (lesson.sound !== false) {
+        // Sound.playError();
+      }
+
+      setStreak(0);
+      setTotalErrors((prev) => prev + 1);
+      setIsError(true);
+
+      if (!allowMistakes) {
+        setUserInput("");
+      }
+    }
+  };
+
+  const checkSentence = (input) => {
+    const targetSentence = lesson.words[currentWordIndex].trim();
+    const isCorrect = input.trim() === targetSentence;
+
+    if (isCorrect) {
+      const newStreak = streak + 1;
+      setStreak(newStreak);
+
+      const streakFeedback = FEEDBACK.STREAK.find(
+        (f) => f.threshold === newStreak
+      );
+      if (streakFeedback) {
+        showFeedbackMessage(streakFeedback.message);
+      }
+
+      if (wordStartTime) {
+        const wordTime = (Date.now() - wordStartTime) / 1000;
+        const wordSpeed = targetSentence.length / 5 / (wordTime / 60);
+        if (wordSpeed > bestSpeed) {
+          setBestSpeed(wordSpeed);
+        }
+      }
+
+      // Trigger word completion animation
+      setWordCompleted(true);
+      setCompletedWordIndex(currentWordIndex);
+
+      // Reset animation after a short delay
+      setTimeout(() => {
+        setWordCompleted(false);
+        setCompletedWordIndex(-1);
+      }, 300);
+
+      setCurrentWordIndex((prev) => prev + 1);
+      setUserInput("");
+      setWordStartTime(null);
+
+      if (currentWordIndex + 1 >= lesson.words.length) {
+        completeLesson();
       }
     } else {
       setStreak(0);
+      setTotalErrors((prev) => prev + 1);
+      setIsError(true);
+
+      if (!allowMistakes) {
+        setUserInput("");
+      }
     }
-    setUserInput("");
   };
 
-  const handleLessonComplete = (finalWordSpeed, finalWordAccuracy) => {
-    const totalTime = (Date.now() - startTime) / 1000;
-    const averageSpeed = (lesson.words.length / totalTime) * 60;
-    const accuracy = Math.max(
-      0,
-      100 - (totalErrors / lesson.words.join("").length) * 100
-    );
+  const completeLesson = () => {
+    const endTime = Date.now();
+    const totalTime = (endTime - startTime) / 1000; // in seconds
+    const totalWords = lesson.words.length;
+    const wpm = totalWords / 5 / (totalTime / 60);
+    const accuracy = ((totalWords - totalErrors) / totalWords) * 100;
 
+    // Update lesson stats
     updateLessonStats({
-      wordsTyped: lesson.words.length,
-      accuracy: (accuracy + finalWordAccuracy) / 2,
-      speed: (averageSpeed + finalWordSpeed) / 2,
+      wpm,
+      accuracy,
+      totalWords,
       totalTime,
-      lessonId: lesson.id,
-      lessonTitle: lesson.title,
-      errors: totalErrors,
+      totalErrors,
     });
 
-    Sound.playCompletion();
-
+    // Mark lesson as completed
     const lessons = JSON.parse(localStorage.getItem("lessons")) || [];
     const updatedLessons = lessons.map((l) =>
-      l.id === lesson.id ? { ...l, completed: true } : l
+      l.id === parseInt(id) ? { ...l, completed: true } : l
     );
     localStorage.setItem("lessons", JSON.stringify(updatedLessons));
 
-    setShowConfetti(true);
-    setTimeout(() => setShowConfetti(false), 5000);
-
     setCompleted(true);
+    setShowConfetti(true);
+
+    toast({
+      title: "Lesson Completed! 🎉",
+      description: `Speed: ${wpm.toFixed(1)} WPM, Accuracy: ${accuracy.toFixed(
+        1
+      )}%`,
+      status: "success",
+      duration: 5000,
+      isClosable: true,
+    });
+
+    setTimeout(() => setShowConfetti(false), 5000);
   };
 
-  const FeedbackPopup = ({ feedback }) => (
-    <Fade in={Boolean(feedback)} timeout={200}>
-      <Box
-        sx={{
-          position: "absolute",
-          top: -60,
-          left: "50%",
-          transform: "translateX(-50%)",
-          zIndex: 1,
-          animation: "popUp 0.5s ease-out",
-          "@keyframes popUp": {
-            "0%": {
-              transform: "translate(-50%, 20px)",
-              opacity: 0,
-            },
-            "50%": {
-              transform: "translate(-50%, -10px)",
-              opacity: 1,
-            },
-            "100%": {
-              transform: "translate(-50%, 0)",
-              opacity: 1,
-            },
-          },
-        }}
-      >
-        <Typography
-          variant="h6"
-          sx={{
-            color:
-              feedback?.type === "streak" ? "success.main" : "primary.main",
-            fontWeight: "bold",
-            textAlign: "center",
-            textShadow: "0 2px 4px rgba(0,0,0,0.1)",
-          }}
-        >
-          {feedback?.message}
-        </Typography>
-      </Box>
-    </Fade>
-  );
+  const showFeedbackMessage = (message) => {
+    setShowFeedback(message);
+    const timeout = setTimeout(() => setShowFeedback(null), 2000);
+    setFeedbackTimeout(timeout);
+  };
 
   const renderHighlightedSentence = (sentence) => {
-    if (!lesson.isSentenceMode) return sentence;
+    if (!debouncedInput) return sentence;
 
-    const words = sentence.split(" ");
-    let charCount = 0;
-    let currentWordIndex = -1;
+    const inputLength = debouncedInput.length;
+    const sentenceChars = sentence.split("");
+    const inputChars = debouncedInput.split("");
 
-    for (let i = 0; i < words.length; i++) {
-      if (charCount + words[i].length >= typedCharacters) {
-        currentWordIndex = i;
-        break;
+    // Use React.memo or a more efficient approach
+    const elements = [];
+    for (let i = 0; i < sentenceChars.length; i++) {
+      if (i < inputLength) {
+        const isCorrect = inputChars[i] === sentenceChars[i];
+        elements.push(
+          <Text
+            key={i}
+            as="span"
+            color={isCorrect ? "green.500" : "red.500"}
+            fontWeight="bold"
+            display="inline"
+          >
+            {sentenceChars[i]}
+          </Text>
+        );
+      } else {
+        elements.push(
+          <Text key={i} as="span" color="gray.600" display="inline">
+            {sentenceChars[i]}
+          </Text>
+        );
       }
-      charCount += words[i].length + 1;
     }
 
+    return <>{elements}</>;
+  };
+
+  const FeedbackPopup = ({ feedback }) => {
+    if (!feedback) return null;
+
     return (
-      <Box component="span">
-        {words.map((word, index) => {
-          const isComplete = index < currentWordIndex;
-          const isCurrent = index === currentWordIndex;
-
-          const space = index === words.length - 1 ? "" : " ";
-
-          return (
-            <Box
-              component="span"
-              key={index}
-              sx={{
-                color: isComplete
-                  ? "success.main"
-                  : isCurrent
-                  ? "primary.main"
-                  : "text.secondary",
-                fontWeight: isCurrent ? 600 : isComplete ? 500 : 400,
-                transition: "color 0.2s, font-weight 0.2s",
-                opacity: isCurrent ? 1 : isComplete ? 1 : 0.75,
-              }}
-            >
-              {word}
-              {space}
-            </Box>
-          );
-        })}
+      <Box
+        position="fixed"
+        top="50%"
+        left="50%"
+        transform="translate(-50%, -50%)"
+        zIndex={1000}
+        bg="yellow.400"
+        color="white"
+        px={6}
+        py={3}
+        borderRadius="xl"
+        boxShadow="xl"
+        animation="fadeIn 0.3s ease-out"
+      >
+        <Text fontSize="lg" fontWeight="bold" textAlign="center">
+          {feedback}
+        </Text>
       </Box>
     );
   };
 
-  if (!lesson) return <Box sx={{ p: 4 }}>Loading...</Box>;
+  if (!lesson) {
+    return (
+      <Container maxW="container.md" py={8}>
+        <Box textAlign="center">
+          <Text fontSize="lg">Loading...</Text>
+        </Box>
+      </Container>
+    );
+  }
 
   const progress = (currentWordIndex / lesson.words.length) * 100;
 
   return (
-    <Box
-      sx={{
-        p: 4,
-        width: "40vw", // Takes up 1/3 of viewport width
-        minWidth: "400px", // Minimum width of 200px
-        mx: "auto", // Centers the component
-      }}
-    >
+    <Container maxW="container.md" py={8}>
       {showConfetti && (
         <Confetti
           width={window.innerWidth}
@@ -424,227 +405,348 @@ const TypingStudio = () => {
         />
       )}
 
-      <Typography variant="h4" component="h2" gutterBottom>
-        {lesson.title}
-      </Typography>
-
-      {completed ? (
-        <Paper sx={{ p: 4, textAlign: "center" }}>
-          <Typography variant="h5" color="success.main" gutterBottom>
-            Congratulations! Lesson completed!
-          </Typography>
+      <VStack spacing={6} align="stretch">
+        <Box>
           <Button
-            variant="contained"
+            variant="ghost"
+            size="sm"
             onClick={() => navigate("/lessons")}
-            sx={{ mt: 2 }}
+            leftIcon={<FiArrowRight transform="rotate(180deg)" />}
+            color="gray.600"
+            _hover={{ color: "brand.500" }}
+            mb={2}
           >
             Back to Lessons
           </Button>
-        </Paper>
-      ) : (
-        <Paper sx={{ p: 4 }}>
-          <Box sx={{ position: "relative" }}>
-            <FeedbackPopup feedback={showFeedback} />
+          <Heading size="xl" mb={2} color="gray.800">
+            {lesson.title}
+          </Heading>
+        </Box>
 
-            {lesson.isKeyLocationMode && lesson.newLetters && (
-              <Box sx={{ mb: 4 }}>
-                <Typography variant="h6" gutterBottom>
-                  New Keys to Learn:
-                </Typography>
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: 2,
-                    justifyContent: "center",
-                    backgroundColor: "primary.50",
-                    p: 2,
-                    borderRadius: 2,
-                  }}
+        {completed ? (
+          <Card
+            bg={bg}
+            border="1px solid"
+            borderColor={borderColor}
+            borderRadius="xl"
+          >
+            <CardBody p={8} textAlign="center">
+              <VStack spacing={6}>
+                <Icon as={FiCheck} boxSize={16} color="green.500" />
+                <Heading size="lg" color="green.600">
+                  Congratulations! Lesson completed!
+                </Heading>
+                <Button
+                  colorScheme="brand"
+                  size="lg"
+                  onClick={() => navigate("/lessons")}
+                  leftIcon={<FiArrowRight />}
+                  px={8}
+                  py={6}
+                  borderRadius="xl"
                 >
-                  {lesson.newLetters.map((letter, index) => (
-                    <Box
-                      key={index}
-                      sx={{
-                        opacity:
-                          letter === lesson.words[currentWordIndex][0]
-                            ? 1
-                            : 0.6,
-                        transition: "opacity 0.3s",
-                      }}
+                  Back to Lessons
+                </Button>
+              </VStack>
+            </CardBody>
+          </Card>
+        ) : (
+          <Card
+            bg={bg}
+            border="1px solid"
+            borderColor={borderColor}
+            borderRadius="xl"
+          >
+            <CardBody p={8}>
+              <VStack spacing={6} align="stretch">
+                <FeedbackPopup feedback={showFeedback} />
+
+                {lesson.isKeyLocationMode && lesson.newLetters && (
+                  <Box>
+                    <Heading size="md" mb={4}>
+                      New Keys to Learn:
+                    </Heading>
+                    <HStack
+                      spacing={4}
+                      justify="center"
+                      bg="brand.50"
+                      p={4}
+                      borderRadius="xl"
+                      flexWrap="wrap"
                     >
-                      <KeyboardKey letter={letter} />
-                    </Box>
-                  ))}
-                </Box>
-              </Box>
-            )}
-
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="h6" gutterBottom>
-                {lesson.isPictureMode
-                  ? "Type what you see:"
-                  : lesson.isKeyLocationMode
-                  ? "Practice typing:"
-                  : lesson.isSentenceMode
-                  ? "Type the sentence:"
-                  : "Current Word:"}
-              </Typography>
-              {lesson.isPictureMode ? (
-                <Box
-                  sx={{
-                    fontSize: "6rem",
-                    textAlign: "center",
-                    py: 4,
-                    backgroundColor: "primary.50",
-                    borderRadius: 2,
-                    animation: "fadeIn 0.5s ease-out",
-                    "@keyframes fadeIn": {
-                      from: { opacity: 0, transform: "scale(0.9)" },
-                      to: { opacity: 1, transform: "scale(1)" },
-                    },
-                  }}
-                >
-                  {(lesson.emojiMap &&
-                    lesson.emojiMap[lesson.words[currentWordIndex]]) ||
-                    "❓"}
-                </Box>
-              ) : (
-                <Typography
-                  variant="h5"
-                  sx={{
-                    color: "primary.main",
-                    fontWeight: "500",
-                    backgroundColor: "primary.50",
-                    p: 2,
-                    borderRadius: 1,
-                    textAlign: "center",
-                    fontSize: lesson.isSentenceMode ? "1.25rem" : "1.5rem",
-                    lineHeight: lesson.isSentenceMode ? 1.5 : 1.2,
-                  }}
-                >
-                  {lesson.isSentenceMode
-                    ? renderHighlightedSentence(lesson.words[currentWordIndex])
-                    : lesson.words[currentWordIndex]}
-                </Typography>
-              )}
-              {/* Hidden text for screen readers */}
-              <Typography
-                sx={{ position: "absolute", left: -9999, opacity: 0 }}
-              >
-                {lesson.words[currentWordIndex]}
-              </Typography>
-            </Box>
-
-            <Box sx={{ position: "relative" }}>
-              <TextField
-                fullWidth
-                value={userInput}
-                onChange={handleInputChange}
-                placeholder={
-                  lesson.isSentenceMode
-                    ? "Type the sentence and press Enter..."
-                    : "Type the word above..."
-                }
-                error={isError}
-                autoFocus
-                multiline={lesson.isSentenceMode}
-                rows={lesson.isSentenceMode ? 2 : 1}
-                onKeyDown={(e) => {
-                  if (lesson.isSentenceMode && e.key === "Enter") {
-                    e.preventDefault();
-                    setShowSpaceHint(false);
-                    const trimmed = userInput.trim();
-                    if (trimmed === lesson.words[currentWordIndex]) {
-                      checkSentence(trimmed);
-                    }
-                  }
-                }}
-                sx={{
-                  mb: 3,
-                  animation: isError
-                    ? "shake 0.5s cubic-bezier(.36,.07,.19,.97) both"
-                    : "none",
-                  backgroundColor: isError ? "error.50" : "transparent",
-                  transition: "background-color 0.3s",
-                  "@keyframes shake": {
-                    "10%, 90%": {
-                      transform: "translate3d(-1px, 0, 0)",
-                    },
-                    "20%, 80%": {
-                      transform: "translate3d(2px, 0, 0)",
-                    },
-                    "30%, 50%, 70%": {
-                      transform: "translate3d(-4px, 0, 0)",
-                    },
-                    "40%, 60%": {
-                      transform: "translate3d(4px, 0, 0)",
-                    },
-                  },
-                }}
-              />
-              <Fade in={showSpaceHint}>
-                <Box
-                  sx={{
-                    position: "absolute",
-                    right: 16,
-                    top: lesson.isSentenceMode ? "25%" : "50%",
-                    transform: "translateY(-50%)",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    color: "primary.main",
-                    animation: "pulse 1.5s infinite",
-                    "@keyframes pulse": {
-                      "0%": { opacity: 1 },
-                      "50%": { opacity: 0.5 },
-                      "100%": { opacity: 1 },
-                    },
-                  }}
-                >
-                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                    Press
-                  </Typography>
-                  <Box
-                    sx={{
-                      border: "2px solid",
-                      borderColor: "primary.main",
-                      borderRadius: 1,
-                      px: 1,
-                      py: 0.5,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 0.5,
-                    }}
-                  >
-                    {lesson.isSentenceMode ? (
-                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        RETURN
-                      </Typography>
-                    ) : (
-                      <>
-                        <SpaceBarIcon fontSize="small" />
-                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                          SPACE
-                        </Typography>
-                      </>
-                    )}
+                      {lesson.newLetters.map((letter, index) => (
+                        <Box
+                          key={index}
+                          opacity={
+                            letter === lesson.words[currentWordIndex][0]
+                              ? 1
+                              : 0.6
+                          }
+                          transition="opacity 0.3s"
+                        >
+                          <KeyboardKey letter={letter} />
+                        </Box>
+                      ))}
+                    </HStack>
                   </Box>
-                </Box>
-              </Fade>
-            </Box>
+                )}
 
-            <Box sx={{ mb: 2 }}>
-              <LinearProgress variant="determinate" value={progress} />
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                Progress: {currentWordIndex}/{lesson.words.length}{" "}
-                {lesson.isSentenceMode ? "sentences" : "words"}
-              </Typography>
-            </Box>
-          </Box>
-        </Paper>
-      )}
-    </Box>
+                <Box>
+                  <Heading size="md" mb={4}>
+                    {lesson.isPictureMode
+                      ? "Type what you see:"
+                      : lesson.isKeyLocationMode
+                      ? "Practice typing:"
+                      : lesson.isSentenceMode
+                      ? "Type the sentence:"
+                      : "Current Word:"}
+                  </Heading>
+
+                  {lesson.isPictureMode ? (
+                    <Box
+                      fontSize="6rem"
+                      textAlign="center"
+                      py={8}
+                      bg="brand.50"
+                      borderRadius="xl"
+                      animation="fadeIn 0.5s ease-out"
+                    >
+                      {(lesson.emojiMap &&
+                        lesson.emojiMap[lesson.words[currentWordIndex]]) ||
+                        "❓"}
+                    </Box>
+                  ) : (
+                    <Box
+                      bg="brand.50"
+                      p={6}
+                      borderRadius="xl"
+                      textAlign="center"
+                      border="2px solid"
+                      borderColor={
+                        wordCompleted && completedWordIndex === currentWordIndex
+                          ? "green.400"
+                          : "brand.200"
+                      }
+                      transform={
+                        wordCompleted && completedWordIndex === currentWordIndex
+                          ? "scale(1.05)"
+                          : "scale(1)"
+                      }
+                      transition="all 0.3s ease"
+                      boxShadow={
+                        wordCompleted && completedWordIndex === currentWordIndex
+                          ? "0 0 20px rgba(72, 187, 120, 0.4)"
+                          : "none"
+                      }
+                      position="relative"
+                    >
+                      <Text
+                        fontSize={lesson.isSentenceMode ? "xl" : "2xl"}
+                        color={
+                          wordCompleted &&
+                          completedWordIndex === currentWordIndex
+                            ? "green.600"
+                            : "brand.600"
+                        }
+                        fontWeight="semibold"
+                        lineHeight={lesson.isSentenceMode ? 1.6 : 1.2}
+                        transition="color 0.3s ease"
+                      >
+                        {lesson.isSentenceMode
+                          ? renderHighlightedSentence(
+                              lesson.words[currentWordIndex]
+                            )
+                          : lesson.words[currentWordIndex]}
+                      </Text>
+
+                      {/* Word completion checkmark */}
+                      {wordCompleted &&
+                        completedWordIndex === currentWordIndex && (
+                          <Box
+                            position="absolute"
+                            top="50%"
+                            left="50%"
+                            transform="translate(-50%, -50%)"
+                            zIndex={10}
+                            animation="fadeInOut 0.6s ease-in-out"
+                          >
+                            <Icon
+                              as={FiCheckCircle}
+                              color="green.500"
+                              fontSize="4xl"
+                              filter="drop-shadow(0 2px 4px rgba(0,0,0,0.3))"
+                            />
+                          </Box>
+                        )}
+                    </Box>
+                  )}
+                </Box>
+
+                <Box position="relative">
+                  {lesson.isSentenceMode ? (
+                    <Textarea
+                      value={userInput}
+                      onChange={handleInputChange}
+                      placeholder="Type the sentence and press Enter..."
+                      isInvalid={isError}
+                      autoFocus
+                      rows={2}
+                      size="lg"
+                      borderRadius="xl"
+                      bg={isError ? "red.50" : "white"}
+                      borderColor={isError ? "red.300" : "gray.300"}
+                      transform={wordCompleted ? "scale(1.02)" : "scale(1)"}
+                      transition="all 0.2s ease"
+                      _focus={{
+                        borderColor: isError ? "red.500" : "brand.500",
+                        boxShadow: isError
+                          ? "0 0 0 1px #E53E3E"
+                          : "0 0 0 1px #3182CE",
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          setShowSpaceHint(false);
+                          const trimmed = userInput.trim();
+                          if (trimmed === lesson.words[currentWordIndex]) {
+                            checkSentence(trimmed);
+                          }
+                        }
+                      }}
+                    />
+                  ) : (
+                    <Input
+                      value={userInput}
+                      onChange={handleInputChange}
+                      placeholder="Type the word and press Space..."
+                      isInvalid={isError}
+                      autoFocus
+                      size="lg"
+                      borderRadius="xl"
+                      bg={isError ? "red.50" : "white"}
+                      borderColor={isError ? "red.300" : "gray.300"}
+                      transform={wordCompleted ? "scale(1.02)" : "scale(1)"}
+                      transition="all 0.2s ease"
+                      _focus={{
+                        borderColor: isError ? "red.500" : "brand.500",
+                        boxShadow: isError
+                          ? "0 0 0 1px #E53E3E"
+                          : "0 0 0 1px #3182CE",
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === " ") {
+                          e.preventDefault();
+                          setShowSpaceHint(false);
+                          const trimmed = userInput.trim();
+                          if (trimmed === lesson.words[currentWordIndex]) {
+                            checkWord(trimmed);
+                          }
+                        }
+                      }}
+                    />
+                  )}
+
+                  {showSpaceHint && (
+                    <Box
+                      position="absolute"
+                      right={4}
+                      top="50%"
+                      transform="translateY(-50%)"
+                      display="flex"
+                      alignItems="center"
+                      gap={2}
+                      color="brand.500"
+                      animation="hintFadeIn 0.3s ease-out, hintPulse 1.5s ease-in-out 0.3s infinite"
+                      bg="white"
+                      p={2}
+                      borderRadius="md"
+                      zIndex={1000}
+                      boxShadow="0 2px 8px rgba(0,0,0,0.1)"
+                      border="1px solid"
+                      borderColor="brand.200"
+                    >
+                      <Text fontSize="sm" fontWeight="medium">
+                        Press
+                      </Text>
+                      <Badge
+                        colorScheme="brand"
+                        variant="outline"
+                        px={3}
+                        py={1}
+                        borderRadius="md"
+                        display="flex"
+                        alignItems="center"
+                        gap={1}
+                      >
+                        {lesson.isSentenceMode ? (
+                          <Text fontSize="xs" fontWeight="medium">
+                            RETURN
+                          </Text>
+                        ) : (
+                          <>
+                            <Icon as={FiArrowRight} boxSize={3} />
+                            <Text fontSize="xs" fontWeight="medium">
+                              SPACE
+                            </Text>
+                          </>
+                        )}
+                      </Badge>
+                    </Box>
+                  )}
+                </Box>
+
+                <Box>
+                  <Progress
+                    value={progress}
+                    size="lg"
+                    colorScheme="brand"
+                    borderRadius="full"
+                    mb={2}
+                  />
+                  <Text fontSize="sm" color="gray.600" textAlign="center">
+                    Progress: {currentWordIndex}/{lesson.words.length}{" "}
+                    {lesson.isSentenceMode ? "sentences" : "words"}
+                  </Text>
+                </Box>
+
+                {/* Stats Display */}
+                <HStack
+                  justify="space-between"
+                  bg="gray.50"
+                  p={4}
+                  borderRadius="lg"
+                >
+                  <VStack spacing={1} align="start">
+                    <Text fontSize="sm" color="gray.600">
+                      Streak
+                    </Text>
+                    <Text fontSize="lg" fontWeight="bold" color="orange.500">
+                      {streak}
+                    </Text>
+                  </VStack>
+                  <VStack spacing={1} align="start">
+                    <Text fontSize="sm" color="gray.600">
+                      Errors
+                    </Text>
+                    <Text fontSize="lg" fontWeight="bold" color="red.500">
+                      {totalErrors}
+                    </Text>
+                  </VStack>
+                  <VStack spacing={1} align="start">
+                    <Text fontSize="sm" color="gray.600">
+                      Best Speed
+                    </Text>
+                    <Text fontSize="lg" fontWeight="bold" color="blue.500">
+                      {bestSpeed.toFixed(1)} WPM
+                    </Text>
+                  </VStack>
+                </HStack>
+              </VStack>
+            </CardBody>
+          </Card>
+        )}
+      </VStack>
+    </Container>
   );
 };
 

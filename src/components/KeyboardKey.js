@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
+import { Box, Text, VStack, HStack } from "@chakra-ui/react";
 
 const KeyboardKey = ({ letter }) => {
   // Define keyboard row layouts
@@ -10,63 +10,48 @@ const KeyboardKey = ({ letter }) => {
   };
 
   return (
-    <Box
-      sx={{
-        display: "inline-flex",
-        flexDirection: "column",
-        alignItems: "center",
-        my: 1,
-      }}
-    >
+    <VStack spacing={2} align="center">
       <Box
-        sx={{
-          width: "200px",
-          height: "120px",
-          position: "relative",
-          border: "1px solid #ccc",
-          borderRadius: 1,
-          backgroundColor: "#f5f5f5",
-        }}
+        w="180px"
+        h="100px"
+        position="relative"
+        border="1px solid"
+        borderColor="gray.300"
+        borderRadius="lg"
+        bg="gray.50"
+        p={2}
       >
         {/* Keyboard visualization */}
         {Object.values(keyboardLayout).map((row, idx) => (
-          <Box
-            key={idx}
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              gap: 0.5,
-              my: 0.5,
-              ml: idx * 1,
-            }}
-          >
+          <HStack key={idx} justify="center" spacing={1} my={1} ml={idx * 2}>
             {row.map((key, keyIdx) => (
               <Box
                 key={keyIdx}
-                sx={{
-                  width: "20px",
-                  height: "20px",
-                  border: "1px solid #ccc",
-                  borderRadius: 0.5,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "12px",
-                  backgroundColor:
-                    key === letter.toLowerCase() ? "primary.main" : "white",
-                  color: key === letter.toLowerCase() ? "white" : "inherit",
-                }}
+                w="16px"
+                h="16px"
+                border="1px solid"
+                borderColor="gray.300"
+                borderRadius="sm"
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+                fontSize="xs"
+                fontWeight="medium"
+                bg={key === letter.toLowerCase() ? "brand.500" : "white"}
+                color={key === letter.toLowerCase() ? "white" : "gray.700"}
+                boxShadow={key === letter.toLowerCase() ? "md" : "none"}
+                transition="all 0.2s"
               >
                 {key}
               </Box>
             ))}
-          </Box>
+          </HStack>
         ))}
       </Box>
-      <Typography variant="caption" sx={{ mt: 1 }}>
+      <Text fontSize="sm" color="gray.600" fontWeight="medium">
         {letter.toUpperCase()} key location
-      </Typography>
-    </Box>
+      </Text>
+    </VStack>
   );
 };
 

@@ -1,19 +1,24 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   Box,
-  TextField,
+  VStack,
+  HStack,
+  FormControl,
+  FormLabel,
+  Input,
+  Textarea,
   Button,
-  Typography,
-  Stack,
+  Text,
   Switch,
-  FormControlLabel,
-  List,
-  ListItem,
-  ListItemText,
-  Chip,
+  Badge,
   Popover,
-} from "@mui/material";
-import { Edit as EditIcon } from "@mui/icons-material";
+  PopoverTrigger,
+  PopoverContent,
+  PopoverBody,
+  Divider,
+  Heading,
+} from "@chakra-ui/react";
+import { FiEdit } from "react-icons/fi";
 import EmojiPicker from "emoji-picker-react";
 import KeyboardKey from "../KeyboardKey";
 
@@ -38,14 +43,12 @@ const LessonForm = ({
 }) => {
   const [emojiPickerState, setEmojiPickerState] = useState({
     isOpen: false,
-    anchorEl: null,
     selectedWord: null,
   });
 
-  const handleEmojiSelect = useCallback((word, event) => {
+  const handleEmojiSelect = useCallback((word) => {
     setEmojiPickerState({
       isOpen: true,
-      anchorEl: event.currentTarget,
       selectedWord: word,
     });
   }, []);
@@ -60,7 +63,6 @@ const LessonForm = ({
       }
       setEmojiPickerState({
         isOpen: false,
-        anchorEl: null,
         selectedWord: null,
       });
     },
@@ -70,27 +72,74 @@ const LessonForm = ({
   const handleClose = useCallback(() => {
     setEmojiPickerState({
       isOpen: false,
-      anchorEl: null,
       selectedWord: null,
     });
   }, []);
 
+  // Memoize the word array to prevent re-splitting on every render
+  const wordArray = useMemo(() => {
+    if (!words || !isPictureMode) return [];
+    return words
+      .trim()
+      .split(/\s+/)
+      .filter((word) => word.length > 0);
+  }, [words, isPictureMode]);
+
+  // Only show emoji mappings if there are words and we're in picture mode
+  const shouldShowEmojiMappings = isPictureMode && wordArray.length > 0;
+
+  // Defer emoji mappings rendering to avoid typing delays
+  const [showEmojiMappings, setShowEmojiMappings] = useState(false);
+
+  // Show emoji mappings after a delay when typing stops
+  React.useEffect(() => {
+    if (shouldShowEmojiMappings) {
+      const timer = setTimeout(() => {
+        setShowEmojiMappings(true);
+      }, 1000); // 1 second delay
+      return () => clearTimeout(timer);
+    } else {
+      setShowEmojiMappings(false);
+    }
+  }, [shouldShowEmojiMappings]);
+
   return (
     <form onSubmit={onSubmit}>
-      <Stack spacing={3}>
-        <TextField
-          label="Lesson Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          required
-          fullWidth
-        />
+      <VStack spacing={6} align="stretch">
+        {/* Lesson Title */}
+        <FormControl isRequired>
+          <FormLabel fontSize="lg" fontWeight="semibold">
+            Lesson Title
+          </FormLabel>
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Enter lesson title..."
+            size="lg"
+            borderRadius="lg"
+          />
+        </FormControl>
 
-        <Box sx={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-          <FormControlLabel
-            control={
+        {/* Mode Switches */}
+        <Box>
+          <Text fontSize="lg" fontWeight="semibold" mb={4}>
+            Lesson Type
+          </Text>
+          <VStack spacing={3} align="stretch">
+            <HStack
+              justify="space-between"
+              p={4}
+              bg="gray.50"
+              borderRadius="lg"
+            >
+              <Box>
+                <Text fontWeight="medium">Picture Mode</Text>
+                <Text fontSize="sm" color="gray.600">
+                  Use emojis to represent words
+                </Text>
+              </Box>
               <Switch
-                checked={isPictureMode}
+                isChecked={isPictureMode}
                 onChange={(e) => {
                   setIsPictureMode(e.target.checked);
                   if (e.target.checked) {
@@ -98,14 +147,25 @@ const LessonForm = ({
                     setIsSentenceMode(false);
                   }
                 }}
+                colorScheme="purple"
+                size="lg"
               />
-            }
-            label="Picture Mode (uses emojis)"
-          />
-          <FormControlLabel
-            control={
+            </HStack>
+
+            <HStack
+              justify="space-between"
+              p={4}
+              bg="gray.50"
+              borderRadius="lg"
+            >
+              <Box>
+                <Text fontWeight="medium">Key Location Mode</Text>
+                <Text fontSize="sm" color="gray.600">
+                  Focus on specific keyboard keys
+                </Text>
+              </Box>
               <Switch
-                checked={isKeyLocationMode}
+                isChecked={isKeyLocationMode}
                 onChange={(e) => {
                   setIsKeyLocationMode(e.target.checked);
                   if (e.target.checked) {
@@ -113,14 +173,25 @@ const LessonForm = ({
                     setIsSentenceMode(false);
                   }
                 }}
+                colorScheme="blue"
+                size="lg"
               />
-            }
-            label="Key Location Mode"
-          />
-          <FormControlLabel
-            control={
+            </HStack>
+
+            <HStack
+              justify="space-between"
+              p={4}
+              bg="gray.50"
+              borderRadius="lg"
+            >
+              <Box>
+                <Text fontWeight="medium">Sentence Mode</Text>
+                <Text fontSize="sm" color="gray.600">
+                  Practice with full sentences
+                </Text>
+              </Box>
               <Switch
-                checked={isSentenceMode}
+                isChecked={isSentenceMode}
                 onChange={(e) => {
                   setIsSentenceMode(e.target.checked);
                   if (e.target.checked) {
@@ -128,103 +199,155 @@ const LessonForm = ({
                     setIsKeyLocationMode(false);
                   }
                 }}
+                colorScheme="green"
+                size="lg"
               />
-            }
-            label="Sentence Mode"
-          />
+            </HStack>
+          </VStack>
         </Box>
 
+        {/* New Letters Input */}
         {isKeyLocationMode && (
-          <TextField
-            label="New Letters to Learn"
-            value={newLetters}
-            onChange={(e) =>
-              setNewLetters(e.target.value.replace(/[^a-zA-Z]/g, ""))
-            }
-            helperText="Enter the new letters to learn (letters only)"
-            fullWidth
-          />
+          <FormControl>
+            <FormLabel fontSize="lg" fontWeight="semibold">
+              New Letters to Learn
+            </FormLabel>
+            <Input
+              value={newLetters}
+              onChange={(e) =>
+                setNewLetters(e.target.value.replace(/[^a-zA-Z]/g, ""))
+              }
+              placeholder="Enter letters (e.g., qwerty)"
+              size="lg"
+              borderRadius="lg"
+            />
+            <Text fontSize="sm" color="gray.600" mt={2}>
+              Enter the new letters to learn (letters only)
+            </Text>
+          </FormControl>
         )}
 
-        <TextField
-          label={isSentenceMode ? "Lesson Sentences" : "Lesson Words"}
-          value={words}
-          onChange={(e) => setWords(e.target.value)}
-          required
-          fullWidth
-          multiline
-          rows={6}
-          helperText={
-            isSentenceMode
+        {/* Words/Sentences Input */}
+        <FormControl isRequired>
+          <FormLabel fontSize="lg" fontWeight="semibold">
+            {isSentenceMode ? "Lesson Sentences" : "Lesson Words"}
+          </FormLabel>
+          <Textarea
+            value={words}
+            onChange={(e) => setWords(e.target.value)}
+            placeholder={
+              isSentenceMode
+                ? "Enter sentences separated by line breaks..."
+                : "Enter words separated by spaces..."
+            }
+            rows={6}
+            size="lg"
+            borderRadius="lg"
+            resize="vertical"
+          />
+          <Text fontSize="sm" color="gray.600" mt={2}>
+            {isSentenceMode
               ? "Enter sentences separated by line breaks (Enter key)"
-              : "Enter words separated by spaces"
-          }
-        />
+              : "Enter words separated by spaces"}
+          </Text>
+        </FormControl>
 
+        {/* Key Locations Preview */}
         {isKeyLocationMode && newLetters && (
           <Box>
-            <Typography variant="subtitle1" gutterBottom>
+            <Heading size="md" mb={4}>
               Key Locations:
-            </Typography>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+            </Heading>
+            <HStack spacing={3} flexWrap="wrap">
               {newLetters.split("").map((letter, index) => (
                 <KeyboardKey key={index} letter={letter} />
               ))}
-            </Box>
+            </HStack>
           </Box>
         )}
 
-        {isPictureMode && words && (
+        {/* Emoji Mappings */}
+        {showEmojiMappings && (
           <Box>
-            <Typography variant="subtitle1" gutterBottom>
-              Emoji Mappings (click to change):
-            </Typography>
-            <List>
-              {words
-                .trim()
-                .split(/\s+/)
-                .map((word) => (
-                  <ListItem key={word}>
-                    <ListItemText primary={word} />
-                    <Chip
-                      label={wordEmojiMap[word] || "Select emoji"}
-                      onClick={(event) => handleEmojiSelect(word, event)}
-                      icon={<EditIcon />}
-                    />
-                  </ListItem>
-                ))}
-            </List>
-            <Popover
-              id="emoji-popover"
-              open={emojiPickerState.isOpen}
-              anchorEl={emojiPickerState.anchorEl}
-              onClose={handleClose}
-              anchorOrigin={{
-                vertical: "bottom",
-                horizontal: "center",
-              }}
-              transformOrigin={{
-                vertical: "top",
-                horizontal: "center",
-              }}
-              sx={{ zIndex: 1300 }}
-            >
-              <Box sx={{ p: 1 }}>
-                <EmojiPicker onEmojiClick={handleEmojiClick} />
-              </Box>
-            </Popover>
+            <Heading size="md" mb={4}>
+              Emoji Mappings
+            </Heading>
+            <Text fontSize="sm" color="gray.600" mb={4}>
+              Click on emojis to change them
+            </Text>
+            <VStack spacing={3} align="stretch">
+              {wordArray.map((word) => (
+                <HStack
+                  key={word}
+                  p={3}
+                  bg="gray.50"
+                  borderRadius="lg"
+                  justify="space-between"
+                >
+                  <Text fontWeight="medium">{word}</Text>
+                  <Popover
+                    isOpen={
+                      emojiPickerState.isOpen &&
+                      emojiPickerState.selectedWord === word
+                    }
+                    onClose={handleClose}
+                    placement="top"
+                  >
+                    <PopoverTrigger>
+                      <Badge
+                        colorScheme="purple"
+                        variant="outline"
+                        cursor="pointer"
+                        px={3}
+                        py={2}
+                        borderRadius="full"
+                        onClick={() => handleEmojiSelect(word)}
+                        _hover={{ bg: "purple.50" }}
+                      >
+                        <HStack spacing={2}>
+                          <Text fontSize="lg">
+                            {wordEmojiMap[word] || "Select emoji"}
+                          </Text>
+                          <FiEdit size={14} />
+                        </HStack>
+                      </Badge>
+                    </PopoverTrigger>
+                    <PopoverContent>
+                      <PopoverBody p={0}>
+                        <EmojiPicker onEmojiClick={handleEmojiClick} />
+                      </PopoverBody>
+                    </PopoverContent>
+                  </Popover>
+                </HStack>
+              ))}
+            </VStack>
           </Box>
         )}
 
-        <Box sx={{ display: "flex", gap: 2, justifyContent: "flex-end" }}>
-          <Button variant="outlined" color="error" onClick={onCancel}>
+        <Divider />
+
+        {/* Action Buttons */}
+        <HStack spacing={4} justify="flex-end">
+          <Button
+            variant="outline"
+            colorScheme="red"
+            onClick={onCancel}
+            size="lg"
+            px={8}
+          >
             Cancel
           </Button>
-          <Button type="submit" variant="contained">
+          <Button
+            type="submit"
+            colorScheme="brand"
+            size="lg"
+            px={8}
+            borderRadius="xl"
+          >
             {submitButtonText}
           </Button>
-        </Box>
-      </Stack>
+        </HStack>
+      </VStack>
     </form>
   );
 };

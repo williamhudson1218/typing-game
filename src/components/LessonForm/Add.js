@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Typography, Paper } from "@mui/material";
+import {
+  Box,
+  Container,
+  Heading,
+  Text,
+  Card,
+  CardBody,
+} from "@chakra-ui/react";
 import { suggestEmoji } from "../../utils/emojiMap";
 import LessonForm from "./index";
 
@@ -62,36 +69,45 @@ const AddLesson = () => {
 
     lessons.push(newLesson);
     localStorage.setItem("lessons", JSON.stringify(lessons));
+
     navigate("/lessons");
   };
 
   return (
-    <Box sx={{ p: 4, maxWidth: 800, mx: "auto" }}>
-      <Typography variant="h4" component="h2" gutterBottom>
-        Add New Lesson
-      </Typography>
-      <Paper sx={{ p: 4, mt: 3 }}>
-        <LessonForm
-          title={title}
-          setTitle={setTitle}
-          words={words}
-          setWords={setWords}
-          isPictureMode={isPictureMode}
-          setIsPictureMode={setIsPictureMode}
-          isKeyLocationMode={isKeyLocationMode}
-          setIsKeyLocationMode={setIsKeyLocationMode}
-          isSentenceMode={isSentenceMode}
-          setIsSentenceMode={setIsSentenceMode}
-          wordEmojiMap={wordEmojiMap}
-          setWordEmojiMap={setWordEmojiMap}
-          newLetters={newLetters}
-          setNewLetters={setNewLetters}
-          onSubmit={handleSubmit}
-          onCancel={() => navigate("/lessons")}
-          submitButtonText="Create Lesson"
-        />
-      </Paper>
-    </Box>
+    <Container maxW="container.md" py={8}>
+      <Box>
+        <Heading size="xl" mb={2} color="gray.800">
+          Add New Lesson
+        </Heading>
+        <Text color="gray.600" fontSize="lg" mb={8}>
+          Create a custom typing lesson to improve your skills
+        </Text>
+
+        <Card borderRadius="xl" boxShadow="lg">
+          <CardBody p={8}>
+            <LessonForm
+              title={title}
+              setTitle={setTitle}
+              words={words}
+              setWords={setWords}
+              isPictureMode={isPictureMode}
+              setIsPictureMode={setIsPictureMode}
+              isKeyLocationMode={isKeyLocationMode}
+              setIsKeyLocationMode={setIsKeyLocationMode}
+              isSentenceMode={isSentenceMode}
+              setIsSentenceMode={setIsSentenceMode}
+              wordEmojiMap={wordEmojiMap}
+              setWordEmojiMap={setWordEmojiMap}
+              newLetters={newLetters}
+              setNewLetters={setNewLetters}
+              onSubmit={handleSubmit}
+              onCancel={() => navigate("/lessons")}
+              submitButtonText="Create Lesson"
+            />
+          </CardBody>
+        </Card>
+      </Box>
+    </Container>
   );
 };
 

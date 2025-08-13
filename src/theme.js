@@ -1,91 +1,84 @@
-import { createTheme } from "@mui/material/styles";
+import { extendTheme } from "@chakra-ui/react";
 
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: "#3b82f6", // Modern blue
-      light: "#60a5fa",
-      dark: "#2563eb",
+const theme = extendTheme({
+  config: {
+    initialColorMode: "light",
+    useSystemColorMode: false,
+  },
+  colors: {
+    brand: {
+      50: "#e3f2fd",
+      100: "#bbdefb",
+      200: "#90caf9",
+      300: "#64b5f6",
+      400: "#42a5f5",
+      500: "#2196f3",
+      600: "#1e88e5",
+      700: "#1976d2",
+      800: "#1565c0",
+      900: "#0d47a1",
     },
-    secondary: {
-      main: "#8b5cf6", // Modern purple
-      light: "#a78bfa",
-      dark: "#7c3aed",
-    },
-    error: {
-      main: "#ef4444", // Modern red
-      light: "#f87171",
-      dark: "#dc2626",
-    },
-    background: {
-      default: "#f8fafc",
-      paper: "#ffffff",
-    },
-    text: {
-      primary: "#1e293b",
-      secondary: "#64748b",
+    accent: {
+      50: "#fce4ec",
+      100: "#f8bbd9",
+      200: "#f48fb1",
+      300: "#f06292",
+      400: "#ec407a",
+      500: "#e91e63",
+      600: "#d81b60",
+      700: "#c2185b",
+      800: "#ad1457",
+      900: "#880e4f",
     },
   },
-  typography: {
-    fontFamily: [
-      "Inter",
-      "-apple-system",
-      "BlinkMacSystemFont",
-      '"Segoe UI"',
-      "Roboto",
-      '"Helvetica Neue"',
-      "Arial",
-      "sans-serif",
-    ].join(","),
-    h4: {
-      fontWeight: 600,
-      fontSize: "1.75rem",
+  fonts: {
+    heading: '"Inter", "Segoe UI", system-ui, sans-serif',
+    body: '"Inter", "Segoe UI", system-ui, sans-serif',
+  },
+  styles: {
+    global: {
+      body: {
+        bg: "gray.50",
+        color: "gray.800",
+      },
     },
   },
   components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          textTransform: "none",
-          borderRadius: 8,
-          padding: "8px 16px",
-          fontWeight: 500,
-        },
+    Button: {
+      defaultProps: {
+        colorScheme: "brand",
       },
-    },
-    MuiPaper: {
-      styleOverrides: {
-        root: {
-          borderRadius: 12,
-          boxShadow:
-            "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+      variants: {
+        solid: {
+          bg: "brand.500",
+          color: "white",
+          _hover: {
+            bg: "brand.600",
+          },
         },
-      },
-    },
-    MuiTableCell: {
-      styleOverrides: {
-        root: {
-          padding: "16px 24px",
+        outline: {
+          borderColor: "brand.500",
+          color: "brand.500",
+          _hover: {
+            bg: "brand.50",
+          },
         },
-        head: {
-          fontWeight: 600,
-          backgroundColor: "#f8fafc",
-        },
-      },
-    },
-    MuiTableRow: {
-      styleOverrides: {
-        root: {
-          "&:last-child td": {
-            borderBottom: 0,
+        ghost: {
+          color: "brand.500",
+          _hover: {
+            bg: "brand.50",
           },
         },
       },
     },
-    MuiIconButton: {
-      styleOverrides: {
-        root: {
-          padding: 8,
+    Card: {
+      baseStyle: {
+        container: {
+          bg: "white",
+          borderRadius: "xl",
+          boxShadow: "lg",
+          border: "1px solid",
+          borderColor: "gray.200",
         },
       },
     },
