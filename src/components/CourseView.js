@@ -155,7 +155,7 @@ const CourseView = () => {
               </Badge>
             </HStack>
           </Box>
-          
+
           {/* Add Lesson Button */}
           <Button
             leftIcon={<FiPlus />}

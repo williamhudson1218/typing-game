@@ -30,7 +30,6 @@ import {
   FiTrash2,
   FiPlus,
   FiBook,
-  FiChevronRight,
 } from "react-icons/fi";
 
 const Courses = () => {
@@ -278,20 +277,22 @@ const Courses = () => {
                           </Badge>
                         </HStack>
 
-                        {/* View Course Button */}
+                        {/* Add Lesson Button */}
                         <Box mt="auto">
                           <Button
-                            rightIcon={<FiChevronRight />}
+                            leftIcon={<FiPlus />}
                             variant="outline"
                             colorScheme="brand"
                             size="sm"
                             w="full"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleViewCourse(course.id);
+                              navigate("/add-lesson", {
+                                state: { courseId: course.id },
+                              });
                             }}
                           >
-                            View Course
+                            Add Lesson
                           </Button>
                         </Box>
                       </VStack>

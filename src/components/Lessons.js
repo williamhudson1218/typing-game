@@ -39,7 +39,7 @@ const Lessons = () => {
   const [lessons, setLessons] = useState([]);
   const [courses, setCourses] = useState([]);
   const [lessonToDelete, setLessonToDelete] = useState(null);
-  const [selectedCourseFilter, setSelectedCourseFilter] = useState("all");
+
   const { isOpen, onOpen, onClose } = useDisclosure();
   const cancelRef = React.useRef();
   const navigate = useNavigate();
@@ -50,7 +50,6 @@ const Lessons = () => {
   useEffect(() => {
     loadLessons();
     loadCourses();
-    loadCurrentCourseSetting();
   }, []);
 
   const loadLessons = () => {
@@ -64,12 +63,7 @@ const Lessons = () => {
     setCourses(storedCourses);
   };
 
-  const loadCurrentCourseSetting = () => {
-    const settings = JSON.parse(localStorage.getItem("settings")) || {};
-    if (settings.currentCourseId) {
-      setSelectedCourseFilter(settings.currentCourseId.toString());
-    }
-  };
+
 
   const handleDelete = (lesson) => {
     setLessonToDelete(lesson);
@@ -97,15 +91,7 @@ const Lessons = () => {
   };
 
   const getFilteredLessons = () => {
-    if (selectedCourseFilter === "all") {
-      return lessons;
-    } else if (selectedCourseFilter === "unassigned") {
-      return lessons.filter((lesson) => !lesson.courseId);
-    } else {
-      return lessons.filter(
-        (lesson) => lesson.courseId === parseInt(selectedCourseFilter)
-      );
-    }
+    return lessons;
   };
 
   const getCourseName = (courseId) => {
@@ -150,31 +136,7 @@ const Lessons = () => {
             Create New Lesson
           </Button>
 
-          {/* Course Filter */}
-          <HStack spacing={2}>
-            <Text fontSize="sm" color="gray.600" fontWeight="medium">
-              Filter by course:
-            </Text>
-            <select
-              value={selectedCourseFilter}
-              onChange={(e) => setSelectedCourseFilter(e.target.value)}
-              style={{
-                padding: "8px 12px",
-                border: "1px solid #E2E8F0",
-                borderRadius: "6px",
-                fontSize: "14px",
-                backgroundColor: "white",
-              }}
-            >
-              <option value="all">All Lessons</option>
-              <option value="unassigned">Unassigned</option>
-              {courses.map((course) => (
-                <option key={course.id} value={course.id}>
-                  {course.title}
-                </option>
-              ))}
-            </select>
-          </HStack>
+
         </HStack>
 
         {/* Lessons Grid */}
@@ -332,14 +294,10 @@ const Lessons = () => {
             <VStack spacing={6}>
               <Box textAlign="center">
                 <Heading size="lg" color="gray.600" mb={2}>
-                  {selectedCourseFilter === "all"
-                    ? "No Lessons Yet"
-                    : "No Lessons Found"}
+                  No Lessons Yet
                 </Heading>
                 <Text color="gray.500" fontSize="lg">
-                  {selectedCourseFilter === "all"
-                    ? "Create your first typing lesson to get started!"
-                    : `No lessons found for the selected filter. Try changing the course filter or create a new lesson.`}
+                  Create your first typing lesson to get started!
                 </Text>
               </Box>
               <Button
