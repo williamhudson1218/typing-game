@@ -31,6 +31,7 @@ import {
   FiPlus,
   FiBook,
   FiChevronRight,
+  FiStar,
 } from "react-icons/fi";
 
 const Courses = () => {
@@ -94,6 +95,15 @@ const Courses = () => {
     navigate(`/course/${courseId}`);
   };
 
+  const handleSetAsDefault = (courseId) => {
+    const settings = JSON.parse(localStorage.getItem("settings")) || {};
+    const newSettings = { ...settings, currentCourseId: courseId };
+    localStorage.setItem("settings", JSON.stringify(newSettings));
+    
+    // Show a toast or feedback
+    alert("Course set as default! This will be the default filter on the lessons page.");
+  };
+
   const getCourseProgress = (courseId) => {
     const courseLessons = lessons.filter(
       (lesson) => lesson.courseId === courseId
@@ -121,6 +131,11 @@ const Courses = () => {
         return progress.completed;
       }).length,
     };
+  };
+
+  const getCurrentDefaultCourse = () => {
+    const settings = JSON.parse(localStorage.getItem("settings")) || {};
+    return settings.currentCourseId;
   };
 
   return (
@@ -161,6 +176,7 @@ const Courses = () => {
             {courses.map((course) => {
               const stats = getCourseStats(course.id);
               const progress = getCourseProgress(course.id);
+              const isDefault = getCurrentDefaultCourse() === course.id;
 
               return (
                 <GridItem key={course.id}>
@@ -259,6 +275,20 @@ const Courses = () => {
                           }}
                         >
                           View Course
+                        </Button>
+
+                        {/* Set as Default Button */}
+                        <Button
+                          leftIcon={<FiStar />}
+                          variant={isDefault ? "solid" : "ghost"}
+                          colorScheme="yellow"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSetAsDefault(course.id);
+                          }}
+                        >
+                          {isDefault ? "Default Course" : "Set as Default"}
                         </Button>
                       </VStack>
                     </CardBody>

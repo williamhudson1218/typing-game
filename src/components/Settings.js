@@ -20,6 +20,7 @@ import {
   FiTarget,
   FiSettings,
   FiSave,
+  FiBook,
 } from "react-icons/fi";
 
 const Settings = () => {
@@ -30,6 +31,7 @@ const Settings = () => {
     difficulty: "medium",
     showProgress: true,
     autoSave: true,
+    currentCourseId: null,
   });
 
   const bg = "white";
@@ -213,6 +215,26 @@ const Settings = () => {
                   { value: "hard", label: "Hard" },
                 ]}
                 colorScheme="red"
+              />
+
+              <SettingItem
+                title="Default Course"
+                description="Set the default course filter for the lessons page"
+                icon={FiBook}
+                type="select"
+                value={settings.currentCourseId || ""}
+                onChange={(value) => handleSettingChange("currentCourseId", value ? parseInt(value) : null)}
+                options={(() => {
+                  const courses = JSON.parse(localStorage.getItem("courses")) || [];
+                  return [
+                    { value: "", label: "All Lessons" },
+                    ...courses.map(course => ({
+                      value: course.id.toString(),
+                      label: course.title
+                    }))
+                  ];
+                })()}
+                colorScheme="blue"
               />
             </VStack>
           </CardBody>

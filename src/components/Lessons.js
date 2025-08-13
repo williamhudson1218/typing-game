@@ -50,6 +50,7 @@ const Lessons = () => {
   useEffect(() => {
     loadLessons();
     loadCourses();
+    loadCurrentCourseSetting();
   }, []);
 
   const loadLessons = () => {
@@ -61,6 +62,13 @@ const Lessons = () => {
   const loadCourses = () => {
     const storedCourses = JSON.parse(localStorage.getItem("courses")) || [];
     setCourses(storedCourses);
+  };
+
+  const loadCurrentCourseSetting = () => {
+    const settings = JSON.parse(localStorage.getItem("settings")) || {};
+    if (settings.currentCourseId) {
+      setSelectedCourseFilter(settings.currentCourseId.toString());
+    }
   };
 
   const handleDelete = (lesson) => {
