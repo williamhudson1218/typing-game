@@ -32,7 +32,6 @@ import {
   FiTrash2,
   FiPlus,
   FiPlay,
-  FiRefreshCw,
   FiImage,
   FiFileText,
   FiArrowLeft,
@@ -49,23 +48,25 @@ const CourseView = () => {
   const { courseId } = useParams();
 
   useEffect(() => {
+    const loadCourse = () => {
+      const storedCourses = JSON.parse(localStorage.getItem("courses")) || [];
+      const foundCourse = storedCourses.find(
+        (c) => c.id === parseInt(courseId)
+      );
+      setCourse(foundCourse);
+    };
+
+    const loadLessons = () => {
+      const storedLessons = JSON.parse(localStorage.getItem("lessons")) || [];
+      const courseLessons = storedLessons
+        .filter((lesson) => lesson.courseId === parseInt(courseId))
+        .sort((a, b) => b.id - a.id);
+      setLessons(courseLessons);
+    };
+
     loadCourse();
     loadLessons();
   }, [courseId]);
-
-  const loadCourse = () => {
-    const storedCourses = JSON.parse(localStorage.getItem("courses")) || [];
-    const foundCourse = storedCourses.find(c => c.id === parseInt(courseId));
-    setCourse(foundCourse);
-  };
-
-  const loadLessons = () => {
-    const storedLessons = JSON.parse(localStorage.getItem("lessons")) || [];
-    const courseLessons = storedLessons
-      .filter(lesson => lesson.courseId === parseInt(courseId))
-      .sort((a, b) => b.id - a.id);
-    setLessons(courseLessons);
-  };
 
   const handleDelete = (lesson) => {
     setLessonToDelete(lesson);
@@ -79,7 +80,13 @@ const CourseView = () => {
         (lesson) => lesson.id !== lessonToDelete.id
       );
       localStorage.setItem("lessons", JSON.stringify(updatedLessons));
-      loadLessons();
+
+      // Reload lessons after deletion
+      const storedLessons = JSON.parse(localStorage.getItem("lessons")) || [];
+      const courseLessons = storedLessons
+        .filter((lesson) => lesson.courseId === parseInt(courseId))
+        .sort((a, b) => b.id - a.id);
+      setLessons(courseLessons);
     }
     onClose();
     setLessonToDelete(null);
@@ -98,7 +105,8 @@ const CourseView = () => {
   };
 
   const getLessonProgress = (lessonId) => {
-    const progress = JSON.parse(localStorage.getItem(`progress_${lessonId}`)) || {};
+    const progress =
+      JSON.parse(localStorage.getItem(`progress_${lessonId}`)) || {};
     return progress;
   };
 
@@ -148,7 +156,12 @@ const CourseView = () => {
                   {lessons.length} lessons
                 </Badge>
                 <Badge colorScheme="green" variant="subtle">
-                  {lessons.filter(lesson => getLessonProgress(lesson.id).completed).length} completed
+                  {
+                    lessons.filter(
+                      (lesson) => getLessonProgress(lesson.id).completed
+                    ).length
+                  }{" "}
+                  completed
                 </Badge>
               </HStack>
             </Box>
@@ -161,7 +174,11 @@ const CourseView = () => {
             leftIcon={<FiPlus />}
             colorScheme="brand"
             size="lg"
-            onClick={() => navigate("/add-lesson", { state: { courseId: parseInt(courseId) } })}
+            onClick={() =>
+              navigate("/add-lesson", {
+                state: { courseId: parseInt(courseId) },
+              })
+            }
           >
             Add Lesson to Course
           </Button>
@@ -179,7 +196,7 @@ const CourseView = () => {
           >
             {lessons.map((lesson) => {
               const progress = getLessonProgress(lesson.id);
-              
+
               return (
                 <GridItem key={lesson.id}>
                   <Card
@@ -229,7 +246,7 @@ const CourseView = () => {
                         </HStack>
                       </Flex>
                     </CardHeader>
-                    
+
                     <CardBody pt={0}>
                       <VStack spacing={3} align="stretch">
                         {/* Lesson Type Badges */}
@@ -272,7 +289,11 @@ const CourseView = () => {
 
                         {/* Progress */}
                         {progress.completed && (
-                          <Badge colorScheme="green" variant="solid" alignSelf="start">
+                          <Badge
+                            colorScheme="green"
+                            variant="solid"
+                            alignSelf="start"
+                          >
                             Completed
                           </Badge>
                         )}
@@ -284,7 +305,9 @@ const CourseView = () => {
                           size="sm"
                           onClick={() => handleStart(lesson.id)}
                         >
-                          {progress.completed ? "Practice Again" : "Start Lesson"}
+                          {progress.completed
+                            ? "Practice Again"
+                            : "Start Lesson"}
                         </Button>
                       </VStack>
                     </CardBody>
@@ -301,7 +324,11 @@ const CourseView = () => {
             borderColor="gray.300"
             borderRadius="lg"
           >
-            <FiBook size={48} color="#CBD5E0" style={{ margin: "0 auto 16px" }} />
+            <FiBook
+              size={48}
+              color="#CBD5E0"
+              style={{ margin: "0 auto 16px" }}
+            />
             <Heading size="md" color="gray.500" mb={2}>
               No Lessons in This Course
             </Heading>
@@ -311,7 +338,11 @@ const CourseView = () => {
             <Button
               leftIcon={<FiPlus />}
               colorScheme="brand"
-              onClick={() => navigate("/add-lesson", { state: { courseId: parseInt(courseId) } })}
+              onClick={() =>
+                navigate("/add-lesson", {
+                  state: { courseId: parseInt(courseId) },
+                })
+              }
             >
               Add Lesson
             </Button>
@@ -332,8 +363,8 @@ const CourseView = () => {
             </AlertDialogHeader>
 
             <AlertDialogBody>
-              Are you sure you want to delete "{lessonToDelete?.title}"? 
-              This action cannot be undone.
+              Are you sure you want to delete "{lessonToDelete?.title}"? This
+              action cannot be undone.
             </AlertDialogBody>
 
             <AlertDialogFooter>

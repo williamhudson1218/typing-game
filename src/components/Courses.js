@@ -29,8 +29,6 @@ import {
   FiEdit,
   FiTrash2,
   FiPlus,
-  FiPlay,
-  FiRefreshCw,
   FiBook,
   FiChevronRight,
 } from "react-icons/fi";
@@ -71,16 +69,16 @@ const Courses = () => {
         (course) => course.id !== courseToDelete.id
       );
       localStorage.setItem("courses", JSON.stringify(updatedCourses));
-      
+
       // Remove course from lessons
-      const updatedLessons = lessons.map(lesson => {
+      const updatedLessons = lessons.map((lesson) => {
         if (lesson.courseId === courseToDelete.id) {
           return { ...lesson, courseId: null };
         }
         return lesson;
       });
       localStorage.setItem("lessons", JSON.stringify(updatedLessons));
-      
+
       setCourses(updatedCourses);
       setLessons(updatedLessons);
     }
@@ -97,23 +95,29 @@ const Courses = () => {
   };
 
   const getCourseProgress = (courseId) => {
-    const courseLessons = lessons.filter(lesson => lesson.courseId === courseId);
+    const courseLessons = lessons.filter(
+      (lesson) => lesson.courseId === courseId
+    );
     if (courseLessons.length === 0) return 0;
-    
-    const completedLessons = courseLessons.filter(lesson => {
-      const progress = JSON.parse(localStorage.getItem(`progress_${lesson.id}`)) || {};
+
+    const completedLessons = courseLessons.filter((lesson) => {
+      const progress =
+        JSON.parse(localStorage.getItem(`progress_${lesson.id}`)) || {};
       return progress.completed;
     });
-    
+
     return Math.round((completedLessons.length / courseLessons.length) * 100);
   };
 
   const getCourseStats = (courseId) => {
-    const courseLessons = lessons.filter(lesson => lesson.courseId === courseId);
+    const courseLessons = lessons.filter(
+      (lesson) => lesson.courseId === courseId
+    );
     return {
       totalLessons: courseLessons.length,
-      completedLessons: courseLessons.filter(lesson => {
-        const progress = JSON.parse(localStorage.getItem(`progress_${lesson.id}`)) || {};
+      completedLessons: courseLessons.filter((lesson) => {
+        const progress =
+          JSON.parse(localStorage.getItem(`progress_${lesson.id}`)) || {};
         return progress.completed;
       }).length,
     };
@@ -157,7 +161,7 @@ const Courses = () => {
             {courses.map((course) => {
               const stats = getCourseStats(course.id);
               const progress = getCourseProgress(course.id);
-              
+
               return (
                 <GridItem key={course.id}>
                   <Card
@@ -208,7 +212,7 @@ const Courses = () => {
                         </HStack>
                       </Flex>
                     </CardHeader>
-                    
+
                     <CardBody pt={0}>
                       <VStack spacing={3} align="stretch">
                         {/* Progress */}
@@ -217,7 +221,11 @@ const Courses = () => {
                             <Text fontSize="sm" color="gray.600">
                               Progress
                             </Text>
-                            <Text fontSize="sm" fontWeight="medium" color="gray.700">
+                            <Text
+                              fontSize="sm"
+                              fontWeight="medium"
+                              color="gray.700"
+                            >
                               {progress}%
                             </Text>
                           </Flex>
@@ -228,7 +236,7 @@ const Courses = () => {
                             borderRadius="full"
                           />
                         </Box>
-                        
+
                         {/* Stats */}
                         <HStack justify="space-between">
                           <Badge colorScheme="blue" variant="subtle">
@@ -238,7 +246,7 @@ const Courses = () => {
                             {stats.completedLessons} completed
                           </Badge>
                         </HStack>
-                        
+
                         {/* View Course Button */}
                         <Button
                           rightIcon={<FiChevronRight />}
@@ -267,7 +275,11 @@ const Courses = () => {
             borderColor="gray.300"
             borderRadius="lg"
           >
-            <FiBook size={48} color="#CBD5E0" style={{ margin: "0 auto 16px" }} />
+            <FiBook
+              size={48}
+              color="#CBD5E0"
+              style={{ margin: "0 auto 16px" }}
+            />
             <Heading size="md" color="gray.500" mb={2}>
               No Courses Yet
             </Heading>
@@ -298,8 +310,9 @@ const Courses = () => {
             </AlertDialogHeader>
 
             <AlertDialogBody>
-              Are you sure you want to delete "{courseToDelete?.title}"? 
-              This will remove the course but keep the lessons (they'll become unassigned).
+              Are you sure you want to delete "{courseToDelete?.title}"? This
+              will remove the course but keep the lessons (they'll become
+              unassigned).
             </AlertDialogBody>
 
             <AlertDialogFooter>

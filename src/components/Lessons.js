@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Container,
@@ -33,7 +33,6 @@ import {
   FiImage,
   FiFileText,
   FiBook,
-  FiFilter,
 } from "react-icons/fi";
 
 const Lessons = () => {
@@ -44,7 +43,6 @@ const Lessons = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const cancelRef = React.useRef();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const bg = "white";
   const borderColor = "gray.200";

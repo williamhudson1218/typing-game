@@ -24,34 +24,34 @@ const EditCourse = () => {
   const { id } = useParams();
 
   useEffect(() => {
-    loadCourse();
-  }, [id]);
+    const loadCourse = () => {
+      try {
+        const courses = JSON.parse(localStorage.getItem("courses")) || [];
+        const course = courses.find((c) => c.id === parseInt(id));
 
-  const loadCourse = () => {
-    try {
-      const courses = JSON.parse(localStorage.getItem("courses")) || [];
-      const course = courses.find(c => c.id === parseInt(id));
-      
-      if (course) {
-        setTitle(course.title);
-        setDescription(course.description || "");
-      } else {
-        alert("Course not found");
+        if (course) {
+          setTitle(course.title);
+          setDescription(course.description || "");
+        } else {
+          alert("Course not found");
+          navigate("/courses");
+          return;
+        }
+      } catch (error) {
+        console.error("Error loading course:", error);
+        alert("Failed to load course");
         navigate("/courses");
-        return;
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Error loading course:", error);
-      alert("Failed to load course");
-      navigate("/courses");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
+
+    loadCourse();
+  }, [id, navigate]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     if (!title.trim()) {
       alert("Please enter a course title");
       return;
@@ -61,7 +61,7 @@ const EditCourse = () => {
 
     try {
       const courses = JSON.parse(localStorage.getItem("courses")) || [];
-      const updatedCourses = courses.map(course => {
+      const updatedCourses = courses.map((course) => {
         if (course.id === parseInt(id)) {
           return {
             ...course,
@@ -72,7 +72,7 @@ const EditCourse = () => {
         }
         return course;
       });
-      
+
       localStorage.setItem("courses", JSON.stringify(updatedCourses));
       navigate("/courses");
     } catch (error) {
