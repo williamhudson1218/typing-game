@@ -129,7 +129,9 @@ const LessonForm = ({
           </FormLabel>
           <select
             value={courseId || ""}
-            onChange={(e) => setCourseId(e.target.value ? parseInt(e.target.value) : null)}
+            onChange={(e) =>
+              setCourseId(e.target.value ? parseInt(e.target.value) : null)
+            }
             style={{
               padding: "12px 16px",
               border: "1px solid #E2E8F0",
@@ -142,7 +144,7 @@ const LessonForm = ({
             <option value="">No Course (Unassigned)</option>
             {(() => {
               const courses = JSON.parse(localStorage.getItem("courses")) || [];
-              return courses.map(course => (
+              return courses.map((course) => (
                 <option key={course.id} value={course.id}>
                   {course.title}
                 </option>

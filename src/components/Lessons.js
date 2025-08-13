@@ -94,15 +94,17 @@ const Lessons = () => {
     if (selectedCourseFilter === "all") {
       return lessons;
     } else if (selectedCourseFilter === "unassigned") {
-      return lessons.filter(lesson => !lesson.courseId);
+      return lessons.filter((lesson) => !lesson.courseId);
     } else {
-      return lessons.filter(lesson => lesson.courseId === parseInt(selectedCourseFilter));
+      return lessons.filter(
+        (lesson) => lesson.courseId === parseInt(selectedCourseFilter)
+      );
     }
   };
 
   const getCourseName = (courseId) => {
     if (!courseId) return "Unassigned";
-    const course = courses.find(c => c.id === courseId);
+    const course = courses.find((c) => c.id === courseId);
     return course ? course.title : "Unknown Course";
   };
 
@@ -141,7 +143,7 @@ const Lessons = () => {
           >
             Create New Lesson
           </Button>
-          
+
           {/* Course Filter */}
           <HStack spacing={2}>
             <Text fontSize="sm" color="gray.600" fontWeight="medium">
@@ -160,7 +162,7 @@ const Lessons = () => {
             >
               <option value="all">All Lessons</option>
               <option value="unassigned">Unassigned</option>
-              {courses.map(course => (
+              {courses.map((course) => (
                 <option key={course.id} value={course.id}>
                   {course.title}
                 </option>
@@ -313,13 +315,14 @@ const Lessons = () => {
             <VStack spacing={6}>
               <Box textAlign="center">
                 <Heading size="lg" color="gray.600" mb={2}>
-                  {selectedCourseFilter === "all" ? "No Lessons Yet" : "No Lessons Found"}
+                  {selectedCourseFilter === "all"
+                    ? "No Lessons Yet"
+                    : "No Lessons Found"}
                 </Heading>
                 <Text color="gray.500" fontSize="lg">
-                  {selectedCourseFilter === "all" 
+                  {selectedCourseFilter === "all"
                     ? "Create your first typing lesson to get started!"
-                    : `No lessons found for the selected filter. Try changing the course filter or create a new lesson.`
-                  }
+                    : `No lessons found for the selected filter. Try changing the course filter or create a new lesson.`}
                 </Text>
               </Box>
               <Button
