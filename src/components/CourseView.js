@@ -135,38 +135,38 @@ const CourseView = () => {
           </BreadcrumbItem>
         </Breadcrumb>
 
+        {/* Back Button */}
+        <Box>
+          <Button
+            leftIcon={<FiArrowLeft />}
+            variant="ghost"
+            onClick={() => navigate("/courses")}
+            size="sm"
+          >
+            Back to Courses
+          </Button>
+        </Box>
+
         {/* Header */}
         <Box>
-          <HStack spacing={4} align="start">
-            <Button
-              leftIcon={<FiArrowLeft />}
-              variant="ghost"
-              onClick={() => navigate("/courses")}
-              size="sm"
-            >
-              Back to Courses
-            </Button>
-            <Box flex="1">
-              <Heading size="xl" mb={2} color="gray.800">
-                {course.title}
-              </Heading>
-              <Text color="gray.600" fontSize="lg" mb={4}>
-                {course.description}
-              </Text>
-              <HStack spacing={4}>
-                <Badge colorScheme="blue" variant="subtle">
-                  {lessons.length} lessons
-                </Badge>
-                <Badge colorScheme="green" variant="subtle">
-                  {
-                    lessons.filter(
-                      (lesson) => getLessonProgress(lesson.id).completed
-                    ).length
-                  }{" "}
-                  completed
-                </Badge>
-              </HStack>
-            </Box>
+          <Heading size="xl" mb={2} color="gray.800">
+            {course.title}
+          </Heading>
+          <Text color="gray.600" fontSize="lg" mb={4}>
+            {course.description}
+          </Text>
+          <HStack spacing={4}>
+            <Badge colorScheme="blue" variant="subtle">
+              {lessons.length} lessons
+            </Badge>
+            <Badge colorScheme="green" variant="subtle">
+              {
+                lessons.filter(
+                  (lesson) => getLessonProgress(lesson.id).completed
+                ).length
+              }{" "}
+              completed
+            </Badge>
           </HStack>
         </Box>
 
@@ -218,7 +218,8 @@ const CourseView = () => {
                             {lesson.title}
                           </Heading>
                           <Text color="gray.600" fontSize="sm" noOfLines={2}>
-                            {lesson.words.length} {lesson.isSentenceMode ? "sentences" : "words"}
+                            {lesson.words.length}{" "}
+                            {lesson.isSentenceMode ? "sentences" : "words"}
                           </Text>
                         </Box>
                         <HStack spacing={2}>

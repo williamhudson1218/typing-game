@@ -31,7 +31,6 @@ import {
   FiPlus,
   FiBook,
   FiChevronRight,
-  FiStar,
 } from "react-icons/fi";
 
 const Courses = () => {
@@ -95,16 +94,7 @@ const Courses = () => {
     navigate(`/course/${courseId}`);
   };
 
-  const handleSetAsDefault = (courseId) => {
-    const settings = JSON.parse(localStorage.getItem("settings")) || {};
-    const newSettings = { ...settings, currentCourseId: courseId };
-    localStorage.setItem("settings", JSON.stringify(newSettings));
 
-    // Show a toast or feedback
-    alert(
-      "Course set as default! This will be the default filter on the lessons page."
-    );
-  };
 
   const getCourseProgress = (courseId) => {
     const courseLessons = lessons.filter(
@@ -176,23 +166,34 @@ const Courses = () => {
               return (
                 <GridItem key={course.id}>
                   <Card
-                    border="1px solid"
-                    borderColor="gray.200"
+                    border="2px solid"
+                    borderColor={isDefault ? "brand.500" : "gray.200"}
+                    bg={isDefault ? "brand.50" : "white"}
                     _hover={{
-                      borderColor: "brand.300",
+                      borderColor: isDefault ? "brand.600" : "brand.300",
                       transform: "translateY(-2px)",
                       boxShadow: "lg",
                     }}
                     transition="all 0.2s"
                     cursor="pointer"
                     onClick={() => handleViewCourse(course.id)}
+                    h="100%"
+                    display="flex"
+                    flexDirection="column"
                   >
                     <CardHeader pb={2}>
                       <Flex justify="space-between" align="start">
                         <Box flex="1">
-                          <Heading size="md" color="gray.800" mb={1}>
-                            {course.title}
-                          </Heading>
+                          <HStack spacing={2} mb={1}>
+                            <Heading size="md" color="gray.800">
+                              {course.title}
+                            </Heading>
+                            {isDefault && (
+                              <Badge colorScheme="brand" variant="solid" size="sm">
+                                Current Course
+                              </Badge>
+                            )}
+                          </HStack>
                           <Text color="gray.600" fontSize="sm" noOfLines={2}>
                             {course.description}
                           </Text>
@@ -224,8 +225,8 @@ const Courses = () => {
                       </Flex>
                     </CardHeader>
 
-                    <CardBody pt={0}>
-                      <VStack spacing={3} align="stretch">
+                    <CardBody pt={0} flex="1" display="flex" flexDirection="column">
+                      <VStack spacing={3} align="stretch" flex="1">
                         {/* Progress */}
                         <Box>
                           <Flex justify="space-between" mb={1}>
@@ -247,16 +248,15 @@ const Courses = () => {
                             size="sm"
                             borderRadius="full"
                           />
-                          {stats.totalLessons > 0 && (
-                            <Text
-                              fontSize="xs"
-                              color="gray.500"
-                              mt={1}
-                              textAlign="right"
-                            >
-                              {progress}% complete
-                            </Text>
-                          )}
+                          <Text
+                            fontSize="xs"
+                            color="gray.500"
+                            mt={1}
+                            textAlign="right"
+                            minH="1rem"
+                          >
+                            {stats.totalLessons > 0 ? `${progress}% complete` : " "}
+                          </Text>
                         </Box>
 
                         {/* Stats */}
@@ -270,32 +270,23 @@ const Courses = () => {
                         </HStack>
 
                         {/* View Course Button */}
-                        <Button
-                          rightIcon={<FiChevronRight />}
-                          variant="outline"
-                          colorScheme="brand"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleViewCourse(course.id);
-                          }}
-                        >
-                          View Course
-                        </Button>
+                        <Box mt="auto">
+                          <Button
+                            rightIcon={<FiChevronRight />}
+                            variant="outline"
+                            colorScheme="brand"
+                            size="sm"
+                            w="full"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewCourse(course.id);
+                            }}
+                          >
+                            View Course
+                          </Button>
+                        </Box>
 
-                        {/* Set as Default Button */}
-                        <Button
-                          leftIcon={<FiStar />}
-                          variant={isDefault ? "solid" : "ghost"}
-                          colorScheme="yellow"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleSetAsDefault(course.id);
-                          }}
-                        >
-                          {isDefault ? "Default Course" : "Set as Default"}
-                        </Button>
+
                       </VStack>
                     </CardBody>
                   </Card>

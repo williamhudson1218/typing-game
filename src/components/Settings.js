@@ -218,8 +218,8 @@ const Settings = () => {
               />
 
               <SettingItem
-                title="Default Course"
-                description="Set the default course filter for the lessons page"
+                title="Current Course"
+                description="Set your current course for lesson creation and filtering"
                 icon={FiBook}
                 type="select"
                 value={settings.currentCourseId || ""}

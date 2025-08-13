@@ -189,18 +189,21 @@ const Lessons = () => {
           >
             {getFilteredLessons().map((lesson) => (
               <GridItem key={lesson.id}>
-                <Card
-                  bg={bg}
-                  border="1px solid"
-                  borderColor={borderColor}
-                  borderRadius="xl"
-                  boxShadow="lg"
-                  transition="all 0.2s"
-                  _hover={{
-                    transform: "translateY(-4px)",
-                    boxShadow: "xl",
-                  }}
-                >
+                                  <Card
+                    bg={bg}
+                    border="1px solid"
+                    borderColor={borderColor}
+                    borderRadius="xl"
+                    boxShadow="lg"
+                    transition="all 0.2s"
+                    _hover={{
+                      transform: "translateY(-4px)",
+                      boxShadow: "xl",
+                    }}
+                    h="100%"
+                    display="flex"
+                    flexDirection="column"
+                  >
                   <CardHeader pb={2}>
                     <Flex align="center" justify="space-between">
                       <VStack align="start" spacing={1}>
@@ -253,8 +256,8 @@ const Lessons = () => {
                     </Flex>
                   </CardHeader>
 
-                  <CardBody pt={0}>
-                    <VStack align="stretch" spacing={4}>
+                  <CardBody pt={0} flex="1" display="flex" flexDirection="column">
+                    <VStack align="stretch" spacing={4} flex="1">
                       <Box>
                         <Text fontSize="sm" color="gray.500" mb={1}>
                           Preview
@@ -269,40 +272,43 @@ const Lessons = () => {
                           {lesson.isSentenceMode ? "Sentences" : "Words"}
                         </Text>
                         <Text fontSize="lg" fontWeight="semibold">
-                          {lesson.words.length} {lesson.isSentenceMode ? "sentences" : "words"}
+                          {lesson.words.length}{" "}
+                          {lesson.isSentenceMode ? "sentences" : "words"}
                         </Text>
                       </Box>
 
-                      <HStack spacing={2}>
-                        <Button
-                          leftIcon={
-                            lesson.completed ? <FiRefreshCw /> : <FiPlay />
-                          }
-                          colorScheme="brand"
-                          variant="solid"
-                          size="sm"
-                          flex={1}
-                          onClick={() => navigate(`/lesson/${lesson.id}`)}
-                        >
-                          {lesson.completed ? "Review" : "Start"}
-                        </Button>
-                        <IconButton
-                          icon={<FiEdit />}
-                          colorScheme="blue"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEdit(lesson.id)}
-                          aria-label="Edit lesson"
-                        />
-                        <IconButton
-                          icon={<FiTrash2 />}
-                          colorScheme="red"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDelete(lesson)}
-                          aria-label="Delete lesson"
-                        />
-                      </HStack>
+                      <Box mt="auto">
+                        <HStack spacing={2}>
+                          <Button
+                            leftIcon={
+                              lesson.completed ? <FiRefreshCw /> : <FiPlay />
+                            }
+                            colorScheme="brand"
+                            variant="solid"
+                            size="sm"
+                            flex={1}
+                            onClick={() => navigate(`/lesson/${lesson.id}`)}
+                          >
+                            {lesson.completed ? "Review" : "Start"}
+                          </Button>
+                          <IconButton
+                            icon={<FiEdit />}
+                            colorScheme="blue"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEdit(lesson.id)}
+                            aria-label="Edit lesson"
+                          />
+                          <IconButton
+                            icon={<FiTrash2 />}
+                            colorScheme="red"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDelete(lesson)}
+                            aria-label="Delete lesson"
+                          />
+                        </HStack>
+                      </Box>
                     </VStack>
                   </CardBody>
                 </Card>
