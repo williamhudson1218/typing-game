@@ -169,7 +169,7 @@ const Courses = () => {
                     transition="all 0.2s"
                     cursor="pointer"
                     onClick={() => handleViewCourse(course.id)}
-                    h="100%"
+                    h="280px"
                     display="flex"
                     flexDirection="column"
                   >

@@ -206,6 +206,9 @@ const CourseView = () => {
                       boxShadow: "lg",
                     }}
                     transition="all 0.2s"
+                    h="280px"
+                    display="flex"
+                    flexDirection="column"
                   >
                     <CardHeader pb={2}>
                       <Flex justify="space-between" align="start">
@@ -246,8 +249,8 @@ const CourseView = () => {
                       </Flex>
                     </CardHeader>
 
-                    <CardBody pt={0}>
-                      <VStack spacing={3} align="stretch">
+                    <CardBody pt={0} flex="1" display="flex" flexDirection="column">
+                      <VStack spacing={3} align="stretch" flex="1">
                         {/* Lesson Type Badges */}
                         <HStack spacing={2}>
                           {lesson.isPictureMode && (

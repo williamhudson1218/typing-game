@@ -76,12 +76,22 @@ const Lessons = () => {
   }, [courseId]);
 
   useEffect(() => {
+    // Load settings to get current course
+    const settings = JSON.parse(localStorage.getItem("settings")) || {};
+    const currentCourseId = settings.currentCourseId;
+    
+    // If no courseId in URL but there's a current course, redirect to that course's lessons
+    if (!courseId && currentCourseId) {
+      navigate(`/course/${currentCourseId}/lessons`, { replace: true });
+      return;
+    }
+    
     loadLessons();
     loadCourses();
     if (courseId) {
       loadCourse();
     }
-  }, [courseId, loadLessons, loadCourses, loadCourse]);
+  }, [courseId, loadLessons, loadCourses, loadCourse, navigate]);
 
   const handleDelete = (lesson) => {
     setLessonToDelete(lesson);
@@ -246,7 +256,7 @@ const Lessons = () => {
                     transform: "translateY(-4px)",
                     boxShadow: "xl",
                   }}
-                  h="100%"
+                  h="280px"
                   display="flex"
                   flexDirection="column"
                 >
