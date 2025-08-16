@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Box,
@@ -50,15 +50,7 @@ const Lessons = () => {
   const bg = "white";
   const borderColor = "gray.200";
 
-  useEffect(() => {
-    loadLessons();
-    loadCourses();
-    if (courseId) {
-      loadCourse();
-    }
-  }, [courseId]);
-
-  const loadLessons = () => {
+  const loadLessons = useCallback(() => {
     const storedLessons = JSON.parse(localStorage.getItem("lessons")) || [];
     let filteredLessons = storedLessons;
 
@@ -70,18 +62,26 @@ const Lessons = () => {
 
     const sortedLessons = filteredLessons.sort((a, b) => b.id - a.id);
     setLessons(sortedLessons);
-  };
+  }, [courseId]);
 
-  const loadCourses = () => {
+  const loadCourses = useCallback(() => {
     const storedCourses = JSON.parse(localStorage.getItem("courses")) || [];
     setCourses(storedCourses);
-  };
+  }, []);
 
-  const loadCourse = () => {
+  const loadCourse = useCallback(() => {
     const storedCourses = JSON.parse(localStorage.getItem("courses")) || [];
     const foundCourse = storedCourses.find((c) => c.id === parseInt(courseId));
     setCourse(foundCourse);
-  };
+  }, [courseId]);
+
+  useEffect(() => {
+    loadLessons();
+    loadCourses();
+    if (courseId) {
+      loadCourse();
+    }
+  }, [courseId, loadLessons, loadCourses, loadCourse]);
 
   const handleDelete = (lesson) => {
     setLessonToDelete(lesson);
