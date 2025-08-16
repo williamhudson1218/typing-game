@@ -36,6 +36,7 @@ function App() {
               <Route path="/add-course" element={<AddCourse />} />
               <Route path="/edit-course/:id" element={<EditCourse />} />
               <Route path="/lessons" element={<Lessons />} />
+              <Route path="/course/:courseId/lessons" element={<Lessons />} />
               <Route path="/add-lesson" element={<AddLesson />} />
               <Route path="/lesson/:id" element={<TypingStudio />} />
               <Route path="/edit-lesson/:id" element={<EditLesson />} />

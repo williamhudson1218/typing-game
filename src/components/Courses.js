@@ -25,12 +25,7 @@ import {
   Flex,
   Progress,
 } from "@chakra-ui/react";
-import {
-  FiEdit,
-  FiTrash2,
-  FiPlus,
-  FiBook,
-} from "react-icons/fi";
+import { FiEdit, FiTrash2, FiPlus, FiBook } from "react-icons/fi";
 
 const Courses = () => {
   const [courses, setCourses] = useState([]);
@@ -90,7 +85,7 @@ const Courses = () => {
   };
 
   const handleViewCourse = (courseId) => {
-    navigate(`/course/${courseId}`);
+    navigate(`/course/${courseId}/lessons`);
   };
 
   const getCourseProgress = (courseId) => {

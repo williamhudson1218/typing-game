@@ -169,6 +169,17 @@ const CourseView = () => {
           >
             Add Lesson to Course
           </Button>
+
+          {/* View All Lessons Button */}
+          <Button
+            leftIcon={<FiBook />}
+            variant="outline"
+            colorScheme="brand"
+            size="lg"
+            onClick={() => navigate(`/course/${courseId}/lessons`)}
+          >
+            View All Lessons
+          </Button>
         </Flex>
 
         {/* Lessons Grid */}

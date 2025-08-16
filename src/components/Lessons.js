@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   Box,
   Container,
@@ -33,16 +33,19 @@ import {
   FiImage,
   FiFileText,
   FiBook,
+  FiArrowLeft,
 } from "react-icons/fi";
 
 const Lessons = () => {
   const [lessons, setLessons] = useState([]);
   const [courses, setCourses] = useState([]);
+  const [course, setCourse] = useState(null);
   const [lessonToDelete, setLessonToDelete] = useState(null);
 
   const { isOpen, onOpen, onClose } = useDisclosure();
   const cancelRef = React.useRef();
   const navigate = useNavigate();
+  const { courseId } = useParams();
 
   const bg = "white";
   const borderColor = "gray.200";
@@ -50,11 +53,22 @@ const Lessons = () => {
   useEffect(() => {
     loadLessons();
     loadCourses();
-  }, []);
+    if (courseId) {
+      loadCourse();
+    }
+  }, [courseId]);
 
   const loadLessons = () => {
     const storedLessons = JSON.parse(localStorage.getItem("lessons")) || [];
-    const sortedLessons = storedLessons.sort((a, b) => b.id - a.id);
+    let filteredLessons = storedLessons;
+
+    if (courseId) {
+      filteredLessons = storedLessons.filter(
+        (lesson) => lesson.courseId === parseInt(courseId)
+      );
+    }
+
+    const sortedLessons = filteredLessons.sort((a, b) => b.id - a.id);
     setLessons(sortedLessons);
   };
 
@@ -63,7 +77,11 @@ const Lessons = () => {
     setCourses(storedCourses);
   };
 
-
+  const loadCourse = () => {
+    const storedCourses = JSON.parse(localStorage.getItem("courses")) || [];
+    const foundCourse = storedCourses.find((c) => c.id === parseInt(courseId));
+    setCourse(foundCourse);
+  };
 
   const handleDelete = (lesson) => {
     setLessonToDelete(lesson);
@@ -100,43 +118,109 @@ const Lessons = () => {
     return course ? course.title : "Unknown Course";
   };
 
+  const getCourseProgress = () => {
+    if (!courseId) return null;
+
+    const courseLessons = lessons.filter(
+      (lesson) => lesson.courseId === parseInt(courseId)
+    );
+
+    if (courseLessons.length === 0) return null;
+
+    const completedLessons = courseLessons.filter((lesson) => lesson.completed);
+    const progressPercentage = Math.round(
+      (completedLessons.length / courseLessons.length) * 100
+    );
+
+    return {
+      totalLessons: courseLessons.length,
+      completedLessons: completedLessons.length,
+      progressPercentage,
+    };
+  };
+
+  const getCourseStats = () => {
+    if (!courseId) return null;
+
+    const courseLessons = lessons.filter(
+      (lesson) => lesson.courseId === parseInt(courseId)
+    );
+
+    return {
+      totalLessons: courseLessons.length,
+      completedLessons: courseLessons.filter((lesson) => lesson.completed),
+    };
+  };
+
   return (
     <Container maxW="container.xl" py={8}>
       <VStack spacing={8} align="stretch">
         {/* Header */}
         <Box>
+          {courseId && course && (
+            <Box mb={4}>
+              <Button
+                leftIcon={<FiArrowLeft />}
+                variant="ghost"
+                onClick={() => navigate("/courses")}
+                size="sm"
+                mb={4}
+              >
+                Back to Courses
+              </Button>
+            </Box>
+          )}
+
           <HStack spacing={4} align="start" mb={4}>
             <Box flex="1">
               <Heading size="xl" mb={2} color="gray.800">
-                My Lessons
+                {courseId && course ? course.title : "My Lessons"}
               </Heading>
-              <Text color="gray.600" fontSize="lg">
-                Practice your typing skills with custom lessons
+              <Text color="gray.600" fontSize="lg" mb={courseId ? 2 : 0}>
+                {courseId && course
+                  ? course.description
+                  : "Practice your typing skills with custom lessons"}
               </Text>
+
+              {courseId && course && (
+                <HStack spacing={4} mt={2}>
+                  <Badge colorScheme="blue" variant="subtle">
+                    {getCourseStats()?.totalLessons || 0} lessons
+                  </Badge>
+                  <Badge colorScheme="green" variant="subtle">
+                    {getCourseStats()?.completedLessons || 0} completed
+                  </Badge>
+                  {getCourseProgress() && (
+                    <Badge colorScheme="purple" variant="subtle">
+                      {getCourseProgress().progressPercentage}% complete
+                    </Badge>
+                  )}
+                </HStack>
+              )}
             </Box>
+
             <Button
-              leftIcon={<FiBook />}
-              variant="outline"
+              leftIcon={<FiPlus />}
               colorScheme="brand"
-              onClick={() => navigate("/courses")}
+              size="lg"
+              onClick={() => {
+                if (courseId) {
+                  navigate("/add-lesson", {
+                    state: { courseId: parseInt(courseId) },
+                  });
+                } else {
+                  navigate("/add-lesson");
+                }
+              }}
             >
-              View Courses
+              {courseId ? "Add Lesson to Course" : "Create New Lesson"}
             </Button>
           </HStack>
         </Box>
 
         {/* Controls */}
         <HStack spacing={4} justify="space-between">
-          <Button
-            leftIcon={<FiPlus />}
-            colorScheme="brand"
-            size="lg"
-            onClick={() => navigate("/add-lesson")}
-          >
-            Create New Lesson
-          </Button>
-
-
+          {/* The "Add Lesson to Course" button is now in the header */}
         </HStack>
 
         {/* Lessons Grid */}
@@ -294,22 +378,34 @@ const Lessons = () => {
             <VStack spacing={6}>
               <Box textAlign="center">
                 <Heading size="lg" color="gray.600" mb={2}>
-                  No Lessons Yet
+                  {courseId && course
+                    ? `No Lessons in ${course.title}`
+                    : "No Lessons Yet"}
                 </Heading>
                 <Text color="gray.500" fontSize="lg">
-                  Create your first typing lesson to get started!
+                  {courseId && course
+                    ? "Add your first lesson to this course to get started!"
+                    : "Create your first typing lesson to get started!"}
                 </Text>
               </Box>
               <Button
                 leftIcon={<FiPlus />}
                 colorScheme="brand"
                 size="lg"
-                onClick={() => navigate("/add-lesson")}
+                onClick={() => {
+                  if (courseId) {
+                    navigate("/add-lesson", {
+                      state: { courseId: parseInt(courseId) },
+                    });
+                  } else {
+                    navigate("/add-lesson");
+                  }
+                }}
                 px={8}
                 py={6}
                 borderRadius="xl"
               >
-                Add New Lesson
+                {courseId ? "Add Lesson to Course" : "Add New Lesson"}
               </Button>
             </VStack>
           </Card>
@@ -323,12 +419,20 @@ const Lessons = () => {
               colorScheme="brand"
               variant="outline"
               size="lg"
-              onClick={() => navigate("/add-lesson")}
+              onClick={() => {
+                if (courseId) {
+                  navigate("/add-lesson", {
+                    state: { courseId: parseInt(courseId) },
+                  });
+                } else {
+                  navigate("/add-lesson");
+                }
+              }}
               px={8}
               py={6}
               borderRadius="xl"
             >
-              Add Another Lesson
+              {courseId ? "Add Another Lesson to Course" : "Add Another Lesson"}
             </Button>
           </Box>
         )}

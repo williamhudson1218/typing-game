@@ -46,7 +46,6 @@ const TypingStudio = () => {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [wordCompleted, setWordCompleted] = useState(false);
   const [completedWordIndex, setCompletedWordIndex] = useState(-1);
-  const [debouncedInput, setDebouncedInput] = useState("");
 
   const bg = "white";
   const borderColor = "gray.200";
@@ -99,15 +98,6 @@ const TypingStudio = () => {
       }
     };
   }, [feedbackTimeout]);
-
-  // Debounce input for highlighting to improve performance
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedInput(userInput);
-    }, 100); // 100ms delay
-
-    return () => clearTimeout(timer);
-  }, [userInput]);
 
   const handleInputChange = (e) => {
     const input = e.target.value;
@@ -358,11 +348,11 @@ const TypingStudio = () => {
   };
 
   const renderHighlightedSentence = (sentence) => {
-    if (!debouncedInput) return sentence;
+    if (!userInput) return sentence;
 
-    const inputLength = debouncedInput.length;
+    const inputLength = userInput.length;
     const sentenceChars = sentence.split("");
-    const inputChars = debouncedInput.split("");
+    const inputChars = userInput.split("");
 
     // Use React.memo or a more efficient approach
     const elements = [];
@@ -384,6 +374,40 @@ const TypingStudio = () => {
         elements.push(
           <Text key={i} as="span" color="gray.600" display="inline">
             {sentenceChars[i]}
+          </Text>
+        );
+      }
+    }
+
+    return <>{elements}</>;
+  };
+
+  const renderHighlightedWord = (word) => {
+    if (!userInput) return word;
+
+    const inputLength = userInput.length;
+    const wordChars = word.split("");
+    const inputChars = userInput.split("");
+
+    const elements = [];
+    for (let i = 0; i < wordChars.length; i++) {
+      if (i < inputLength) {
+        const isCorrect = inputChars[i] === wordChars[i];
+        elements.push(
+          <Text
+            key={i}
+            as="span"
+            color={isCorrect ? "green.500" : "red.500"}
+            fontWeight="bold"
+            display="inline"
+          >
+            {wordChars[i]}
+          </Text>
+        );
+      } else {
+        elements.push(
+          <Text key={i} as="span" color="gray.600" display="inline">
+            {wordChars[i]}
           </Text>
         );
       }
@@ -592,7 +616,9 @@ const TypingStudio = () => {
                           ? renderHighlightedSentence(
                               lesson.words[currentWordIndex]
                             )
-                          : lesson.words[currentWordIndex]}
+                          : renderHighlightedWord(
+                              lesson.words[currentWordIndex]
+                            )}
                       </Text>
 
                       {/* Word completion checkmark */}
