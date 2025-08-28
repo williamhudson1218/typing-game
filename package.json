@@ -24,7 +24,7 @@
   },
   "homepage": "https://williamhudson1218.github.io/typing-game",
   "scripts": {
-    "start": "react-scripts start",
+    "start": "react-scripts start --port 3002",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",

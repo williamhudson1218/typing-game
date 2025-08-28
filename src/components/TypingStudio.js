@@ -64,22 +64,41 @@ const TypingStudio = () => {
   };
 
   useEffect(() => {
-    const lessons = JSON.parse(localStorage.getItem("lessons")) || [];
-    const foundLesson = lessons.find((l) => l.id === parseInt(id));
-    if (foundLesson) {
-      if (foundLesson.isPictureMode && !foundLesson.emojiMap) {
-        foundLesson.emojiMap = foundLesson.words.reduce(
-          (map, word) => ({
-            ...map,
-            [word]: suggestEmoji(word) || "❓",
-          }),
-          {}
-        );
+    try {
+      const lessons = JSON.parse(localStorage.getItem("lessons")) || [];
+      const foundLesson = lessons.find((l) => l.id === parseInt(id));
+      if (foundLesson) {
+        // Ensure all required properties exist
+        const lessonWithDefaults = {
+          id: foundLesson.id,
+          title: foundLesson.title || "Untitled Lesson",
+          words: foundLesson.words || [],
+          isPictureMode: foundLesson.isPictureMode || false,
+          isKeyLocationMode: foundLesson.isKeyLocationMode || false,
+          isSentenceMode: foundLesson.isSentenceMode || false,
+          newLetters: foundLesson.newLetters || [],
+          emojiMap: foundLesson.emojiMap || {},
+          completed: foundLesson.completed || false,
+          courseId: foundLesson.courseId || null,
+        };
+
+        if (lessonWithDefaults.isPictureMode && !lessonWithDefaults.emojiMap) {
+          lessonWithDefaults.emojiMap = lessonWithDefaults.words.reduce(
+            (map, word) => ({
+              ...map,
+              [word]: suggestEmoji(word) || "❓",
+            }),
+            {}
+          );
+        }
+        console.log("Loaded lesson:", lessonWithDefaults);
+        setLesson(lessonWithDefaults);
+        setStartTime(Date.now());
+      } else {
+        navigate("/lessons");
       }
-      console.log("Loaded lesson:", foundLesson);
-      setLesson(foundLesson);
-      setStartTime(Date.now());
-    } else {
+    } catch (error) {
+      console.error("Error loading lesson:", error);
       navigate("/lessons");
     }
   }, [id, navigate]);
@@ -101,7 +120,7 @@ const TypingStudio = () => {
 
   const handleInputChange = (e) => {
     const input = e.target.value;
-    const targetWord = lesson.words[currentWordIndex].trim();
+    const targetWord = (lesson.words[currentWordIndex] || "").trim();
 
     if (!wordStartTime && input.length === 1) {
       setWordStartTime(Date.now());
@@ -156,7 +175,7 @@ const TypingStudio = () => {
   };
 
   const checkWord = (input) => {
-    const targetWord = lesson.words[currentWordIndex].trim();
+    const targetWord = (lesson.words[currentWordIndex] || "").trim();
     const isCorrect = input.trim() === targetWord;
 
     if (isCorrect) {
@@ -233,7 +252,7 @@ const TypingStudio = () => {
   };
 
   const checkSentence = (input) => {
-    const targetSentence = lesson.words[currentWordIndex].trim();
+    const targetSentence = (lesson.words[currentWordIndex] || "").trim();
     const isCorrect = input.trim() === targetSentence;
 
     if (isCorrect) {
@@ -441,7 +460,7 @@ const TypingStudio = () => {
     );
   };
 
-  if (!lesson) {
+  if (!lesson || !lesson.words || lesson.words.length === 0) {
     return (
       <Container maxW="container.md" py={8}>
         <Box textAlign="center">
@@ -538,7 +557,7 @@ const TypingStudio = () => {
                         <Box
                           key={index}
                           opacity={
-                            letter === lesson.words[currentWordIndex][0]
+                            letter === (lesson.words[currentWordIndex] || "")[0]
                               ? 1
                               : 0.6
                           }
@@ -572,6 +591,7 @@ const TypingStudio = () => {
                       animation="fadeIn 0.5s ease-out"
                     >
                       {(lesson.emojiMap &&
+                        lesson.words[currentWordIndex] &&
                         lesson.emojiMap[lesson.words[currentWordIndex]]) ||
                         "❓"}
                     </Box>
@@ -614,10 +634,10 @@ const TypingStudio = () => {
                       >
                         {lesson.isSentenceMode
                           ? renderHighlightedSentence(
-                              lesson.words[currentWordIndex]
+                              lesson.words[currentWordIndex] || ""
                             )
                           : renderHighlightedWord(
-                              lesson.words[currentWordIndex]
+                              lesson.words[currentWordIndex] || ""
                             )}
                       </Text>
 
@@ -670,9 +690,9 @@ const TypingStudio = () => {
                           e.preventDefault();
                           setShowSpaceHint(false);
                           const trimmed = userInput.trim();
-                          if (trimmed === lesson.words[currentWordIndex]) {
-                            checkSentence(trimmed);
-                          }
+                                                  if (trimmed === (lesson.words[currentWordIndex] || "")) {
+                          checkSentence(trimmed);
+                        }
                         }
                       }}
                     />
@@ -700,9 +720,9 @@ const TypingStudio = () => {
                           e.preventDefault();
                           setShowSpaceHint(false);
                           const trimmed = userInput.trim();
-                          if (trimmed === lesson.words[currentWordIndex]) {
-                            checkWord(trimmed);
-                          }
+                                                  if (trimmed === (lesson.words[currentWordIndex] || "")) {
+                          checkWord(trimmed);
+                        }
                         }
                       }}
                     />

@@ -249,7 +249,12 @@ const CourseView = () => {
                       </Flex>
                     </CardHeader>
 
-                    <CardBody pt={0} flex="1" display="flex" flexDirection="column">
+                    <CardBody
+                      pt={0}
+                      flex="1"
+                      display="flex"
+                      flexDirection="column"
+                    >
                       <VStack spacing={3} align="stretch" flex="1">
                         {/* Lesson Type Badges */}
                         <HStack spacing={2}>
