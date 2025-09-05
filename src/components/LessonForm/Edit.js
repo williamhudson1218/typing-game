@@ -19,6 +19,7 @@ const EditLesson = () => {
   const [isPictureMode, setIsPictureMode] = useState(false);
   const [isKeyLocationMode, setIsKeyLocationMode] = useState(false);
   const [isSentenceMode, setIsSentenceMode] = useState(false);
+  const [isParagraphMode, setIsParagraphMode] = useState(false);
   const [wordEmojiMap, setWordEmojiMap] = useState({});
   const [newLetters, setNewLetters] = useState("");
   const [debouncedWords, setDebouncedWords] = useState("");
@@ -30,11 +31,14 @@ const EditLesson = () => {
     if (lesson) {
       setTitle(lesson.title);
       setWords(
-        lesson.isSentenceMode ? lesson.words.join("\n") : lesson.words.join(" ")
+        lesson.isParagraphMode || lesson.isSentenceMode
+          ? lesson.words.join("\n")
+          : lesson.words.join(" ")
       );
       setIsPictureMode(lesson.isPictureMode || false);
       setIsKeyLocationMode(lesson.isKeyLocationMode || false);
       setIsSentenceMode(lesson.isSentenceMode || false);
+      setIsParagraphMode(lesson.isParagraphMode || false);
       setWordEmojiMap(lesson.emojiMap || {});
       setNewLetters(lesson.newLetters ? lesson.newLetters.join("") : "");
       setSelectedCourseId(lesson.courseId || null);
@@ -76,7 +80,13 @@ const EditLesson = () => {
     e.preventDefault();
 
     let wordArray;
-    if (isSentenceMode) {
+    if (isParagraphMode) {
+      wordArray = words
+        .trim()
+        .split(/\n+/)
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0);
+    } else if (isSentenceMode) {
       wordArray = words
         .trim()
         .split(/\n+/)
@@ -97,6 +107,7 @@ const EditLesson = () => {
             isPictureMode,
             isKeyLocationMode,
             isSentenceMode,
+            isParagraphMode,
             newLetters: isKeyLocationMode ? newLetters.trim().split("") : [],
             emojiMap: isPictureMode ? wordEmojiMap : {},
             courseId: selectedCourseId,
@@ -132,6 +143,8 @@ const EditLesson = () => {
               setIsKeyLocationMode={setIsKeyLocationMode}
               isSentenceMode={isSentenceMode}
               setIsSentenceMode={setIsSentenceMode}
+              isParagraphMode={isParagraphMode}
+              setIsParagraphMode={setIsParagraphMode}
               wordEmojiMap={wordEmojiMap}
               setWordEmojiMap={setWordEmojiMap}
               newLetters={newLetters}

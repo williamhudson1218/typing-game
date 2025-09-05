@@ -20,6 +20,7 @@ const AddLesson = () => {
   const [isPictureMode, setIsPictureMode] = useState(false);
   const [isKeyLocationMode, setIsKeyLocationMode] = useState(false);
   const [isSentenceMode, setIsSentenceMode] = useState(false);
+  const [isParagraphMode, setIsParagraphMode] = useState(false);
   const [wordEmojiMap, setWordEmojiMap] = useState({});
   const [newLetters, setNewLetters] = useState("");
   const [selectedCourseId, setSelectedCourseId] = useState(null);
@@ -53,7 +54,13 @@ const AddLesson = () => {
     e.preventDefault();
 
     let wordArray;
-    if (isSentenceMode) {
+    if (isParagraphMode) {
+      wordArray = words
+        .trim()
+        .split(/\n+/)
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0);
+    } else if (isSentenceMode) {
       wordArray = words
         .trim()
         .split(/\n+/)
@@ -72,6 +79,7 @@ const AddLesson = () => {
       isPictureMode,
       isKeyLocationMode,
       isSentenceMode,
+      isParagraphMode,
       newLetters: isKeyLocationMode ? newLetters.trim().split("") : [],
       emojiMap: isPictureMode ? wordEmojiMap : {},
       completed: false,
@@ -107,6 +115,8 @@ const AddLesson = () => {
               setIsKeyLocationMode={setIsKeyLocationMode}
               isSentenceMode={isSentenceMode}
               setIsSentenceMode={setIsSentenceMode}
+              isParagraphMode={isParagraphMode}
+              setIsParagraphMode={setIsParagraphMode}
               wordEmojiMap={wordEmojiMap}
               setWordEmojiMap={setWordEmojiMap}
               newLetters={newLetters}

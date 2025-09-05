@@ -85,7 +85,7 @@ const Courses = () => {
   };
 
   const handleViewCourse = (courseId) => {
-    navigate(`/course/${courseId}/lessons`);
+    navigate(`/course/${courseId}`);
   };
 
   const getCourseProgress = (courseId) => {

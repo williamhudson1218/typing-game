@@ -51,28 +51,119 @@ const Lessons = () => {
   const borderColor = "gray.200";
 
   const loadLessons = useCallback(() => {
-    const storedLessons = JSON.parse(localStorage.getItem("lessons")) || [];
-    let filteredLessons = storedLessons;
+    try {
+      const storedLessons = JSON.parse(localStorage.getItem("lessons")) || [];
+      let filteredLessons = storedLessons;
 
-    if (courseId) {
-      filteredLessons = storedLessons.filter(
-        (lesson) => lesson.courseId === parseInt(courseId)
+      if (courseId) {
+        const courseIdInt = parseInt(courseId);
+        console.log(
+          "Filtering lessons for courseId:",
+          courseId,
+          "as int:",
+          courseIdInt
+        );
+        console.log(
+          "Available lessons with courseIds:",
+          storedLessons.map((l) => ({
+            id: l?.id,
+            courseId: l?.courseId,
+            title: l?.title,
+          }))
+        );
+
+        filteredLessons = storedLessons.filter((lesson) => {
+          if (!lesson) return false;
+          // Try both string and integer comparison
+          const matches =
+            lesson.courseId === courseIdInt ||
+            lesson.courseId === courseId ||
+            lesson.courseId === parseInt(lesson.courseId);
+          console.log(
+            `Lesson ${lesson.id} courseId: ${
+              lesson.courseId
+            } (${typeof lesson.courseId}) matches ${courseId}: ${matches}`
+          );
+          return matches;
+        });
+        console.log("Filtered lessons:", filteredLessons.length);
+      }
+
+      // Filter out any invalid lessons and ensure all properties exist
+      filteredLessons = filteredLessons
+        .filter(
+          (lesson) =>
+            lesson && typeof lesson === "object" && lesson.id && lesson.title
+        )
+        .map((lesson) => ({
+          ...lesson,
+          isPictureMode: lesson.isPictureMode || false,
+          isKeyLocationMode: lesson.isKeyLocationMode || false,
+          isSentenceMode: lesson.isSentenceMode || false,
+          isParagraphMode: lesson.isParagraphMode || false,
+          words: lesson.words || [],
+          newLetters: lesson.newLetters || [],
+          emojiMap: lesson.emojiMap || {},
+          completed: lesson.completed || false,
+        }));
+
+      const sortedLessons = filteredLessons.sort((a, b) => b.id - a.id);
+      console.log("Loaded lessons:", sortedLessons);
+      console.log(
+        "Lesson structure check:",
+        sortedLessons.map((l) => ({
+          id: l?.id,
+          title: l?.title,
+          wordsType: Array.isArray(l?.words) ? "array" : typeof l?.words,
+          wordsLength: Array.isArray(l?.words) ? l.words.length : "N/A",
+          hasAllProps: !!(l?.id && l?.title && Array.isArray(l?.words)),
+        }))
       );
+      setLessons(sortedLessons);
+    } catch (error) {
+      console.error("Error loading lessons:", error);
+      setLessons([]);
     }
-
-    const sortedLessons = filteredLessons.sort((a, b) => b.id - a.id);
-    setLessons(sortedLessons);
   }, [courseId]);
 
   const loadCourses = useCallback(() => {
-    const storedCourses = JSON.parse(localStorage.getItem("courses")) || [];
-    setCourses(storedCourses);
+    try {
+      const storedCourses = JSON.parse(localStorage.getItem("courses")) || [];
+      // Filter out invalid courses
+      const validCourses = storedCourses.filter(
+        (course) =>
+          course && typeof course === "object" && course.id && course.title
+      );
+      setCourses(validCourses);
+    } catch (error) {
+      console.error("Error loading courses:", error);
+      setCourses([]);
+    }
   }, []);
 
   const loadCourse = useCallback(() => {
-    const storedCourses = JSON.parse(localStorage.getItem("courses")) || [];
-    const foundCourse = storedCourses.find((c) => c.id === parseInt(courseId));
-    setCourse(foundCourse);
+    try {
+      const storedCourses = JSON.parse(localStorage.getItem("courses")) || [];
+      const foundCourse = storedCourses.find(
+        (c) => c && typeof c === "object" && c.id === parseInt(courseId)
+      );
+      // Ensure the course is a valid object
+      console.log(
+        "Looking for course with ID:",
+        courseId,
+        "Found:",
+        foundCourse
+      );
+      if (foundCourse && typeof foundCourse === "object" && foundCourse.title) {
+        setCourse(foundCourse);
+      } else {
+        console.log("No valid course found for ID:", courseId);
+        setCourse(null);
+      }
+    } catch (error) {
+      console.error("Error loading course:", error);
+      setCourse(null);
+    }
   }, [courseId]);
 
   useEffect(() => {
@@ -82,7 +173,7 @@ const Lessons = () => {
 
     // If no courseId in URL but there's a current course, redirect to that course's lessons
     if (!courseId && currentCourseId) {
-      navigate(`/course/${currentCourseId}/lessons`, { replace: true });
+      navigate(`/course/${currentCourseId}`, { replace: true });
       return;
     }
 
@@ -114,30 +205,106 @@ const Lessons = () => {
     navigate(`/edit-lesson/${id}`);
   };
 
+  // Safety function to ensure we never render objects directly
+  const safeRender = (value, fallback = "") => {
+    if (typeof value === "string" || typeof value === "number") {
+      return value;
+    }
+    if (typeof value === "boolean") {
+      return value ? "Yes" : "No";
+    }
+    if (Array.isArray(value)) {
+      return value.length.toString();
+    }
+    if (typeof value === "object" && value !== null) {
+      console.warn("Attempted to render object directly:", value);
+      return fallback;
+    }
+    return fallback;
+  };
+
   const getPreviewWords = (words) => {
-    return words.slice(0, 3).join(", ") + (words.length > 3 ? "..." : "");
+    if (!words || !Array.isArray(words) || words.length === 0) {
+      return "No words available";
+    }
+
+    // Ensure all words are strings and filter out any non-string values
+    const stringWords = words
+      .filter((word) => {
+        // Handle both string words and objects that might have a text property
+        if (typeof word === "string") {
+          return word.trim().length > 0;
+        } else if (typeof word === "object" && word.text) {
+          return typeof word.text === "string" && word.text.trim().length > 0;
+        }
+        return false;
+      })
+      .map((word) => {
+        // Convert objects to strings if needed
+        if (typeof word === "string") {
+          return word;
+        } else if (typeof word === "object" && word.text) {
+          return word.text;
+        }
+        return String(word); // Fallback
+      })
+      .slice(0, 3);
+
+    if (stringWords.length === 0) {
+      return "No words available";
+    }
+
+    return stringWords.join(", ") + (words.length > 3 ? "..." : "");
   };
 
   const getFilteredLessons = () => {
-    return lessons;
+    // Additional safety check to ensure all lessons are valid objects
+    const filtered = lessons.filter((lesson) => {
+      if (!lesson || typeof lesson !== "object") {
+        console.warn("Invalid lesson found:", lesson);
+        return false;
+      }
+      return true;
+    });
+    console.log("getFilteredLessons returning:", filtered);
+    return filtered;
   };
 
   const getCourseName = (courseId) => {
     if (!courseId) return "Unassigned";
-    const course = courses.find((c) => c.id === courseId);
-    return course ? course.title : "Unknown Course";
+    const course = courses.find(
+      (c) => c && typeof c === "object" && c.id === courseId
+    );
+    console.log("getCourseName - course found:", course);
+    console.log(
+      "getCourseName - course.title:",
+      course?.title,
+      "type:",
+      typeof course?.title
+    );
+    const result =
+      course && typeof course.title === "string"
+        ? course.title
+        : "Unknown Course";
+    console.log("getCourseName for", courseId, "returning:", result);
+    return result;
   };
 
   const getCourseProgress = () => {
     if (!courseId) return null;
 
     const courseLessons = lessons.filter(
-      (lesson) => lesson.courseId === parseInt(courseId)
+      (lesson) =>
+        lesson &&
+        typeof lesson === "object" &&
+        lesson.courseId === parseInt(courseId)
     );
 
     if (courseLessons.length === 0) return null;
 
-    const completedLessons = courseLessons.filter((lesson) => lesson.completed);
+    const completedLessons = courseLessons.filter(
+      (lesson) => lesson && lesson.completed === true
+    );
     const progressPercentage = Math.round(
       (completedLessons.length / courseLessons.length) * 100
     );
@@ -153,12 +320,17 @@ const Lessons = () => {
     if (!courseId) return null;
 
     const courseLessons = lessons.filter(
-      (lesson) => lesson.courseId === parseInt(courseId)
+      (lesson) =>
+        lesson &&
+        typeof lesson === "object" &&
+        lesson.courseId === parseInt(courseId)
     );
 
     return {
       totalLessons: courseLessons.length,
-      completedLessons: courseLessons.filter((lesson) => lesson.completed),
+      completedLessons: courseLessons.filter(
+        (lesson) => lesson && lesson.completed === true
+      ).length,
     };
   };
 
@@ -243,138 +415,171 @@ const Lessons = () => {
             }}
             gap={6}
           >
-            {getFilteredLessons().map((lesson) => (
-              <GridItem key={lesson.id}>
-                <Card
-                  bg={bg}
-                  border="1px solid"
-                  borderColor={borderColor}
-                  borderRadius="xl"
-                  boxShadow="lg"
-                  transition="all 0.2s"
-                  _hover={{
-                    transform: "translateY(-4px)",
-                    boxShadow: "xl",
-                  }}
-                  h="280px"
-                  display="flex"
-                  flexDirection="column"
-                >
-                  <CardHeader pb={2}>
-                    <Flex align="center" justify="space-between">
-                      <VStack align="start" spacing={1}>
-                        <Heading size="md" noOfLines={1}>
-                          {lesson.title}
-                        </Heading>
-                        <HStack spacing={2}>
-                          <Badge
-                            colorScheme={
-                              lesson.isPictureMode ? "purple" : "blue"
-                            }
-                            variant="subtle"
-                            borderRadius="full"
-                            px={3}
-                          >
-                            <HStack spacing={1}>
-                              {lesson.isPictureMode ? (
-                                <FiImage size={14} />
-                              ) : (
-                                <FiFileText size={14} />
-                              )}
-                              <Text fontSize="xs">
-                                {lesson.isPictureMode ? "Pictures" : "Text"}
-                              </Text>
-                            </HStack>
-                          </Badge>
-                          <Badge
-                            colorScheme={lesson.completed ? "green" : "gray"}
-                            variant="subtle"
-                            borderRadius="full"
-                            px={3}
-                          >
-                            {lesson.completed ? "Completed" : "Not Started"}
-                          </Badge>
-                          <Badge
-                            colorScheme="gray"
-                            variant="subtle"
-                            borderRadius="full"
-                            px={3}
-                          >
-                            <HStack spacing={1}>
-                              <FiBook size={12} />
-                              <Text fontSize="xs">
-                                {getCourseName(lesson.courseId)}
-                              </Text>
-                            </HStack>
-                          </Badge>
-                        </HStack>
-                      </VStack>
-                    </Flex>
-                  </CardHeader>
+            {getFilteredLessons().map((lesson) => {
+              // Safety check to ensure lesson is valid
+              if (!lesson || typeof lesson !== "object" || !lesson.id) {
+                console.warn("Invalid lesson object:", lesson);
+                return null;
+              }
 
-                  <CardBody
-                    pt={0}
-                    flex="1"
+              // Additional safety check to ensure lesson has required properties
+              if (!lesson.title || !Array.isArray(lesson.words)) {
+                console.warn("Lesson missing required properties:", lesson);
+                return null;
+              }
+
+              return (
+                <GridItem key={lesson.id}>
+                  <Card
+                    bg={bg}
+                    border="1px solid"
+                    borderColor={borderColor}
+                    borderRadius="xl"
+                    boxShadow="lg"
+                    transition="all 0.2s"
+                    _hover={{
+                      transform: "translateY(-4px)",
+                      boxShadow: "xl",
+                    }}
+                    h="280px"
                     display="flex"
                     flexDirection="column"
                   >
-                    <VStack align="stretch" spacing={4} flex="1">
-                      <Box>
-                        <Text fontSize="sm" color="gray.500" mb={1}>
-                          Preview
-                        </Text>
-                        <Text fontSize="md" noOfLines={2}>
-                          {getPreviewWords(lesson.words)}
-                        </Text>
-                      </Box>
+                    <CardHeader pb={2}>
+                      <Flex align="center" justify="space-between">
+                        <VStack align="start" spacing={1}>
+                          <Heading size="md" noOfLines={1}>
+                            {safeRender(lesson.title, "Untitled Lesson")}
+                          </Heading>
+                          <HStack spacing={2}>
+                            <Badge
+                              colorScheme={
+                                lesson.isPictureMode
+                                  ? "purple"
+                                  : lesson.isParagraphMode
+                                  ? "teal"
+                                  : "blue"
+                              }
+                              variant="subtle"
+                              borderRadius="full"
+                              px={3}
+                            >
+                              <HStack spacing={1}>
+                                {lesson.isPictureMode ? (
+                                  <FiImage size={14} />
+                                ) : (
+                                  <FiFileText size={14} />
+                                )}
+                                <Text fontSize="xs">
+                                  {lesson.isPictureMode
+                                    ? "Pictures"
+                                    : lesson.isParagraphMode
+                                    ? "Paragraph"
+                                    : "Text"}
+                                </Text>
+                              </HStack>
+                            </Badge>
+                            <Badge
+                              colorScheme={lesson.completed ? "green" : "gray"}
+                              variant="subtle"
+                              borderRadius="full"
+                              px={3}
+                            >
+                              {lesson.completed ? "Completed" : "Not Started"}
+                            </Badge>
+                            <Badge
+                              colorScheme="gray"
+                              variant="subtle"
+                              borderRadius="full"
+                              px={3}
+                            >
+                              <HStack spacing={1}>
+                                <FiBook size={12} />
+                                <Text fontSize="xs">
+                                  {getCourseName(lesson.courseId)}
+                                </Text>
+                              </HStack>
+                            </Badge>
+                          </HStack>
+                        </VStack>
+                      </Flex>
+                    </CardHeader>
 
-                      <Box>
-                        <Text fontSize="sm" color="gray.500" mb={1}>
-                          {lesson.isSentenceMode ? "Sentences" : "Words"}
-                        </Text>
-                        <Text fontSize="lg" fontWeight="semibold">
-                          {lesson.words.length}{" "}
-                          {lesson.isSentenceMode ? "sentences" : "words"}
-                        </Text>
-                      </Box>
+                    <CardBody
+                      pt={0}
+                      flex="1"
+                      display="flex"
+                      flexDirection="column"
+                    >
+                      <VStack align="stretch" spacing={4} flex="1">
+                        <Box>
+                          <Text fontSize="sm" color="gray.500" mb={1}>
+                            Preview
+                          </Text>
+                          <Text fontSize="md" noOfLines={2}>
+                            {safeRender(
+                              getPreviewWords(lesson.words || []),
+                              "No preview available"
+                            )}
+                          </Text>
+                        </Box>
 
-                      <Box mt="auto">
-                        <HStack spacing={2}>
-                          <Button
-                            leftIcon={
-                              lesson.completed ? <FiRefreshCw /> : <FiPlay />
-                            }
-                            colorScheme="brand"
-                            variant="solid"
-                            size="sm"
-                            flex={1}
-                            onClick={() => navigate(`/lesson/${lesson.id}`)}
-                          >
-                            {lesson.completed ? "Review" : "Start"}
-                          </Button>
-                          <IconButton
-                            icon={<FiEdit />}
-                            colorScheme="blue"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEdit(lesson.id)}
-                            aria-label="Edit lesson"
-                          />
-                          <IconButton
-                            icon={<FiTrash2 />}
-                            colorScheme="red"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDelete(lesson)}
-                            aria-label="Delete lesson"
-                          />
-                        </HStack>
-                      </Box>
-                    </VStack>
-                  </CardBody>
-                </Card>
-              </GridItem>
-            ))}
+                        <Box>
+                          <Text fontSize="sm" color="gray.500" mb={1}>
+                            {lesson.isParagraphMode
+                              ? "Lines"
+                              : lesson.isSentenceMode
+                              ? "Sentences"
+                              : "Words"}
+                          </Text>
+                          <Text fontSize="lg" fontWeight="semibold">
+                            {safeRender((lesson.words || []).length, "0")}{" "}
+                            {lesson.isParagraphMode
+                              ? "lines"
+                              : lesson.isSentenceMode
+                              ? "sentences"
+                              : "words"}
+                          </Text>
+                        </Box>
+
+                        <Box mt="auto">
+                          <HStack spacing={2}>
+                            <Button
+                              leftIcon={
+                                lesson.completed ? <FiRefreshCw /> : <FiPlay />
+                              }
+                              colorScheme="brand"
+                              variant="solid"
+                              size="sm"
+                              flex={1}
+                              onClick={() => navigate(`/lesson/${lesson.id}`)}
+                            >
+                              {lesson.completed ? "Review" : "Start"}
+                            </Button>
+                            <IconButton
+                              icon={<FiEdit />}
+                              colorScheme="blue"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEdit(lesson.id)}
+                              aria-label="Edit lesson"
+                            />
+                            <IconButton
+                              icon={<FiTrash2 />}
+                              colorScheme="red"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDelete(lesson)}
+                              aria-label="Delete lesson"
+                            />
+                          </HStack>
+                        </Box>
+                      </VStack>
+                    </CardBody>
+                  </Card>
+                </GridItem>
+              );
+            })}
           </Grid>
         ) : (
           // Empty State

@@ -76,6 +76,7 @@ const TypingStudio = () => {
           isPictureMode: foundLesson.isPictureMode || false,
           isKeyLocationMode: foundLesson.isKeyLocationMode || false,
           isSentenceMode: foundLesson.isSentenceMode || false,
+          isParagraphMode: foundLesson.isParagraphMode || false,
           newLetters: foundLesson.newLetters || [],
           emojiMap: foundLesson.emojiMap || {},
           completed: foundLesson.completed || false,
@@ -145,10 +146,10 @@ const TypingStudio = () => {
       return; // Don't process hint logic for empty input
     }
 
-    if (lesson.isSentenceMode) {
+    if (lesson.isParagraphMode || lesson.isSentenceMode) {
       const trimmedInput = input.trimEnd();
 
-      // Only show hint when sentence is completely finished
+      // Only show hint when line/sentence is completely finished
       const shouldShowHint = trimmedInput === targetWord;
 
       if (shouldShowHint && !showSpaceHint) {
@@ -316,6 +317,83 @@ const TypingStudio = () => {
     }
   };
 
+  const checkParagraph = (input) => {
+    const targetLine = (lesson.words[currentWordIndex] || "").trim();
+    const isCorrect = input.trim() === targetLine;
+
+    if (isCorrect) {
+      // Play correct sound
+      if (soundEnabled) {
+        Sound.playSuccess();
+      }
+
+      const newStreak = streak + 1;
+      setStreak(newStreak);
+
+      // Check for streak feedback
+      const streakFeedback = FEEDBACK.STREAK.find(
+        (f) => f.threshold === newStreak
+      );
+      if (streakFeedback) {
+        showFeedbackMessage(streakFeedback.message);
+        if (soundEnabled) {
+          Sound.playStreak();
+        }
+      }
+
+      // Calculate speed for this line
+      if (wordStartTime) {
+        const wordTime = (Date.now() - wordStartTime) / 1000; // in seconds
+        const wordSpeed = targetLine.length / 5 / (wordTime / 60); // WPM
+        if (wordSpeed > bestSpeed) {
+          setBestSpeed(wordSpeed);
+
+          // Check for speed milestones
+          const speedFeedback = FEEDBACK.SPEED.find(
+            (f) => wordSpeed >= f.threshold && bestSpeed < f.threshold
+          );
+          if (speedFeedback) {
+            showFeedbackMessage(speedFeedback.message);
+            if (soundEnabled) {
+              Sound.playAchievement();
+            }
+          }
+        }
+      }
+
+      // Trigger word completion animation
+      setWordCompleted(true);
+      setCompletedWordIndex(currentWordIndex);
+
+      // Reset animation after a short delay
+      setTimeout(() => {
+        setWordCompleted(false);
+        setCompletedWordIndex(-1);
+      }, 300);
+
+      setCurrentWordIndex((prev) => prev + 1);
+      setUserInput("");
+      setWordStartTime(null);
+
+      if (currentWordIndex + 1 >= lesson.words.length) {
+        completeLesson();
+      }
+    } else {
+      // Play error sound
+      if (soundEnabled) {
+        Sound.playError();
+      }
+
+      setStreak(0);
+      setTotalErrors((prev) => prev + 1);
+      setIsError(true);
+
+      if (!allowMistakes) {
+        setUserInput("");
+      }
+    }
+  };
+
   const completeLesson = () => {
     const endTime = Date.now();
     const totalTime = (endTime - startTime) / 1000; // in seconds
@@ -433,6 +511,122 @@ const TypingStudio = () => {
     }
 
     return <>{elements}</>;
+  };
+
+  const renderParagraphContent = () => {
+    if (!lesson.isParagraphMode) return null;
+
+    return (
+      <VStack spacing={4} align="stretch">
+        {/* Instructions */}
+        <Box
+          bg="blue.50"
+          p={4}
+          borderRadius="lg"
+          border="1px solid"
+          borderColor="blue.200"
+        >
+          <Text fontSize="sm" color="blue.800" fontWeight="medium">
+            Instructions: Type each line and press Enter after each line.
+          </Text>
+        </Box>
+
+        {/* Full paragraph display */}
+        <Box
+          bg="brand.50"
+          p={6}
+          borderRadius="xl"
+          border="2px solid"
+          borderColor="brand.200"
+          position="relative"
+        >
+          <Text
+            fontSize="lg"
+            lineHeight="1.8"
+            color="gray.800"
+            whiteSpace="pre-wrap"
+            fontFamily="serif"
+          >
+            {lesson.words.map((line, index) => {
+              const isCurrentLine = index === currentWordIndex;
+              const isCompleted = index < currentWordIndex;
+              const isTitle =
+                line.includes('"') ||
+                line.includes("By ") ||
+                line.includes("by ");
+              const isAuthor = line.startsWith("By ") || line.startsWith("by ");
+
+              return (
+                <React.Fragment key={index}>
+                  <Box
+                    as="span"
+                    position="relative"
+                    display="inline-block"
+                    px={isCurrentLine ? 2 : 0}
+                    py={isCurrentLine ? 1 : 0}
+                    borderRadius={isCurrentLine ? "md" : "none"}
+                    bg={isCurrentLine ? "blue.100" : "transparent"}
+                    border={isCurrentLine ? "2px solid" : "none"}
+                    borderColor={isCurrentLine ? "blue.300" : "transparent"}
+                    transition="all 0.3s ease"
+                    fontWeight={
+                      isTitle ? "bold" : isAuthor ? "medium" : "normal"
+                    }
+                    color={
+                      isCompleted
+                        ? "green.600"
+                        : isCurrentLine
+                        ? "blue.800"
+                        : isTitle
+                        ? "purple.600"
+                        : isAuthor
+                        ? "blue.600"
+                        : "gray.800"
+                    }
+                  >
+                    {isCurrentLine ? renderHighlightedSentence(line) : line}
+
+                    {/* Completion indicator for completed lines */}
+                    {isCompleted && (
+                      <Box
+                        as="span"
+                        position="absolute"
+                        right="-20px"
+                        top="50%"
+                        transform="translateY(-50%)"
+                        color="green.500"
+                        fontSize="sm"
+                      >
+                        ✓
+                      </Box>
+                    )}
+                  </Box>
+                  {index < lesson.words.length - 1 && "\n"}
+                </React.Fragment>
+              );
+            })}
+          </Text>
+
+          {/* Current line progress indicator */}
+          <Box
+            position="absolute"
+            bottom={2}
+            right={2}
+            bg="white"
+            px={2}
+            py={1}
+            borderRadius="md"
+            boxShadow="sm"
+            border="1px solid"
+            borderColor="gray.200"
+          >
+            <Text fontSize="xs" color="gray.600">
+              Line {currentWordIndex + 1} of {lesson.words.length}
+            </Text>
+          </Box>
+        </Box>
+      </VStack>
+    );
   };
 
   const FeedbackPopup = ({ feedback }) => {
@@ -571,108 +765,121 @@ const TypingStudio = () => {
                 )}
 
                 <Box>
-                  <Heading size="md" mb={4}>
-                    {lesson.isPictureMode
-                      ? "Type what you see:"
-                      : lesson.isKeyLocationMode
-                      ? "Practice typing:"
-                      : lesson.isSentenceMode
-                      ? "Type the sentence:"
-                      : "Current Word:"}
-                  </Heading>
-
-                  {lesson.isPictureMode ? (
-                    <Box
-                      fontSize="6rem"
-                      textAlign="center"
-                      py={8}
-                      bg="brand.50"
-                      borderRadius="xl"
-                      animation="fadeIn 0.5s ease-out"
-                    >
-                      {(lesson.emojiMap &&
-                        lesson.words[currentWordIndex] &&
-                        lesson.emojiMap[lesson.words[currentWordIndex]]) ||
-                        "❓"}
-                    </Box>
+                  {lesson.isParagraphMode ? (
+                    renderParagraphContent()
                   ) : (
-                    <Box
-                      bg="brand.50"
-                      p={6}
-                      borderRadius="xl"
-                      textAlign="center"
-                      border="2px solid"
-                      borderColor={
-                        wordCompleted && completedWordIndex === currentWordIndex
-                          ? "green.400"
-                          : "brand.200"
-                      }
-                      transform={
-                        wordCompleted && completedWordIndex === currentWordIndex
-                          ? "scale(1.05)"
-                          : "scale(1)"
-                      }
-                      transition="all 0.3s ease"
-                      boxShadow={
-                        wordCompleted && completedWordIndex === currentWordIndex
-                          ? "0 0 20px rgba(72, 187, 120, 0.4)"
-                          : "none"
-                      }
-                      position="relative"
-                    >
-                      <Text
-                        fontSize={lesson.isSentenceMode ? "xl" : "2xl"}
-                        color={
-                          wordCompleted &&
-                          completedWordIndex === currentWordIndex
-                            ? "green.600"
-                            : "brand.600"
-                        }
-                        fontWeight="semibold"
-                        lineHeight={lesson.isSentenceMode ? 1.6 : 1.2}
-                        transition="color 0.3s ease"
-                      >
-                        {lesson.isSentenceMode
-                          ? renderHighlightedSentence(
-                              lesson.words[currentWordIndex] || ""
-                            )
-                          : renderHighlightedWord(
-                              lesson.words[currentWordIndex] || ""
-                            )}
-                      </Text>
+                    <>
+                      <Heading size="md" mb={4}>
+                        {lesson.isPictureMode
+                          ? "Type what you see:"
+                          : lesson.isKeyLocationMode
+                          ? "Practice typing:"
+                          : lesson.isSentenceMode
+                          ? "Type the sentence:"
+                          : "Current Word:"}
+                      </Heading>
 
-                      {/* Word completion checkmark */}
-                      {wordCompleted &&
-                        completedWordIndex === currentWordIndex && (
-                          <Box
-                            position="absolute"
-                            top="50%"
-                            left="50%"
-                            transform="translate(-50%, -50%)"
-                            zIndex={10}
-                            animation="fadeInOut 0.6s ease-in-out"
+                      {lesson.isPictureMode ? (
+                        <Box
+                          fontSize="6rem"
+                          textAlign="center"
+                          py={8}
+                          bg="brand.50"
+                          borderRadius="xl"
+                          animation="fadeIn 0.5s ease-out"
+                        >
+                          {(lesson.emojiMap &&
+                            lesson.words[currentWordIndex] &&
+                            lesson.emojiMap[lesson.words[currentWordIndex]]) ||
+                            "❓"}
+                        </Box>
+                      ) : (
+                        <Box
+                          bg="brand.50"
+                          p={6}
+                          borderRadius="xl"
+                          textAlign="center"
+                          border="2px solid"
+                          borderColor={
+                            wordCompleted &&
+                            completedWordIndex === currentWordIndex
+                              ? "green.400"
+                              : "brand.200"
+                          }
+                          transform={
+                            wordCompleted &&
+                            completedWordIndex === currentWordIndex
+                              ? "scale(1.05)"
+                              : "scale(1)"
+                          }
+                          transition="all 0.3s ease"
+                          boxShadow={
+                            wordCompleted &&
+                            completedWordIndex === currentWordIndex
+                              ? "0 0 20px rgba(72, 187, 120, 0.4)"
+                              : "none"
+                          }
+                          position="relative"
+                        >
+                          <Text
+                            fontSize={lesson.isSentenceMode ? "xl" : "2xl"}
+                            color={
+                              wordCompleted &&
+                              completedWordIndex === currentWordIndex
+                                ? "green.600"
+                                : "brand.600"
+                            }
+                            fontWeight="semibold"
+                            lineHeight={lesson.isSentenceMode ? 1.6 : 1.2}
+                            transition="color 0.3s ease"
                           >
-                            <Icon
-                              as={FiCheckCircle}
-                              color="green.500"
-                              fontSize="4xl"
-                              filter="drop-shadow(0 2px 4px rgba(0,0,0,0.3))"
-                            />
-                          </Box>
-                        )}
-                    </Box>
+                            {lesson.isSentenceMode
+                              ? renderHighlightedSentence(
+                                  lesson.words[currentWordIndex] || ""
+                                )
+                              : renderHighlightedWord(
+                                  lesson.words[currentWordIndex] || ""
+                                )}
+                          </Text>
+
+                          {/* Word completion checkmark */}
+                          {wordCompleted &&
+                            completedWordIndex === currentWordIndex && (
+                              <Box
+                                position="absolute"
+                                top="50%"
+                                left="50%"
+                                transform="translate(-50%, -50%)"
+                                zIndex={10}
+                                animation="fadeInOut 0.6s ease-in-out"
+                              >
+                                <Icon
+                                  as={FiCheckCircle}
+                                  color="green.500"
+                                  fontSize="4xl"
+                                  filter="drop-shadow(0 2px 4px rgba(0,0,0,0.3))"
+                                />
+                              </Box>
+                            )}
+                        </Box>
+                      )}
+                    </>
                   )}
                 </Box>
 
                 <Box position="relative">
-                  {lesson.isSentenceMode ? (
+                  {lesson.isParagraphMode || lesson.isSentenceMode ? (
                     <Textarea
                       value={userInput}
                       onChange={handleInputChange}
-                      placeholder="Type the sentence and press Enter..."
+                      placeholder={
+                        lesson.isParagraphMode
+                          ? "Type the line and press Enter..."
+                          : "Type the sentence and press Enter..."
+                      }
                       isInvalid={isError}
                       autoFocus
-                      rows={2}
+                      rows={lesson.isParagraphMode ? 3 : 2}
                       size="lg"
                       borderRadius="xl"
                       bg={isError ? "red.50" : "white"}
@@ -690,9 +897,15 @@ const TypingStudio = () => {
                           e.preventDefault();
                           setShowSpaceHint(false);
                           const trimmed = userInput.trim();
-                                                  if (trimmed === (lesson.words[currentWordIndex] || "")) {
-                          checkSentence(trimmed);
-                        }
+                          if (
+                            trimmed === (lesson.words[currentWordIndex] || "")
+                          ) {
+                            if (lesson.isParagraphMode) {
+                              checkParagraph(trimmed);
+                            } else {
+                              checkSentence(trimmed);
+                            }
+                          }
                         }
                       }}
                     />
@@ -720,9 +933,11 @@ const TypingStudio = () => {
                           e.preventDefault();
                           setShowSpaceHint(false);
                           const trimmed = userInput.trim();
-                                                  if (trimmed === (lesson.words[currentWordIndex] || "")) {
-                          checkWord(trimmed);
-                        }
+                          if (
+                            trimmed === (lesson.words[currentWordIndex] || "")
+                          ) {
+                            checkWord(trimmed);
+                          }
                         }
                       }}
                     />
@@ -760,7 +975,7 @@ const TypingStudio = () => {
                         alignItems="center"
                         gap={1}
                       >
-                        {lesson.isSentenceMode ? (
+                        {lesson.isParagraphMode || lesson.isSentenceMode ? (
                           <Text fontSize="xs" fontWeight="medium">
                             RETURN
                           </Text>
@@ -787,7 +1002,11 @@ const TypingStudio = () => {
                   />
                   <Text fontSize="sm" color="gray.600" textAlign="center">
                     Progress: {currentWordIndex}/{lesson.words.length}{" "}
-                    {lesson.isSentenceMode ? "sentences" : "words"}
+                    {lesson.isParagraphMode
+                      ? "lines"
+                      : lesson.isSentenceMode
+                      ? "sentences"
+                      : "words"}
                   </Text>
                 </Box>
 

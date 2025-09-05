@@ -33,6 +33,8 @@ const LessonForm = ({
   setIsKeyLocationMode,
   isSentenceMode,
   setIsSentenceMode,
+  isParagraphMode,
+  setIsParagraphMode,
   wordEmojiMap,
   setWordEmojiMap,
   newLetters,
@@ -178,6 +180,7 @@ const LessonForm = ({
                   if (e.target.checked) {
                     setIsKeyLocationMode(false);
                     setIsSentenceMode(false);
+                    setIsParagraphMode(false);
                   }
                 }}
                 colorScheme="purple"
@@ -204,6 +207,7 @@ const LessonForm = ({
                   if (e.target.checked) {
                     setIsPictureMode(false);
                     setIsSentenceMode(false);
+                    setIsParagraphMode(false);
                   }
                 }}
                 colorScheme="blue"
@@ -230,9 +234,37 @@ const LessonForm = ({
                   if (e.target.checked) {
                     setIsPictureMode(false);
                     setIsKeyLocationMode(false);
+                    setIsParagraphMode(false);
                   }
                 }}
                 colorScheme="green"
+                size="lg"
+              />
+            </HStack>
+
+            <HStack
+              justify="space-between"
+              p={4}
+              bg="gray.50"
+              borderRadius="lg"
+            >
+              <Box>
+                <Text fontWeight="medium">Paragraph Mode</Text>
+                <Text fontSize="sm" color="gray.600">
+                  Practice with structured paragraphs, poems, and formatted text
+                </Text>
+              </Box>
+              <Switch
+                isChecked={isParagraphMode}
+                onChange={(e) => {
+                  setIsParagraphMode(e.target.checked);
+                  if (e.target.checked) {
+                    setIsPictureMode(false);
+                    setIsKeyLocationMode(false);
+                    setIsSentenceMode(false);
+                  }
+                }}
+                colorScheme="teal"
                 size="lg"
               />
             </HStack>
@@ -260,26 +292,34 @@ const LessonForm = ({
           </FormControl>
         )}
 
-        {/* Words/Sentences Input */}
+        {/* Words/Sentences/Paragraphs Input */}
         <FormControl isRequired>
           <FormLabel fontSize="lg" fontWeight="semibold">
-            {isSentenceMode ? "Lesson Sentences" : "Lesson Words"}
+            {isParagraphMode
+              ? "Lesson Content"
+              : isSentenceMode
+              ? "Lesson Sentences"
+              : "Lesson Words"}
           </FormLabel>
           <Textarea
             value={words}
             onChange={(e) => setWords(e.target.value)}
             placeholder={
-              isSentenceMode
+              isParagraphMode
+                ? "Enter structured content with titles, authors, and text..."
+                : isSentenceMode
                 ? "Enter sentences separated by line breaks..."
                 : "Enter words separated by spaces..."
             }
-            rows={6}
+            rows={isParagraphMode ? 10 : 6}
             size="lg"
             borderRadius="lg"
             resize="vertical"
           />
           <Text fontSize="sm" color="gray.600" mt={2}>
-            {isSentenceMode
+            {isParagraphMode
+              ? "Enter structured content. Use line breaks to separate paragraphs, titles, and authors. Format: Title (bold), Author, Content lines..."
+              : isSentenceMode
               ? "Enter sentences separated by line breaks (Enter key)"
               : "Enter words separated by spaces"}
           </Text>

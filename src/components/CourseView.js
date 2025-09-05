@@ -46,19 +46,44 @@ const CourseView = () => {
 
   useEffect(() => {
     const loadCourse = () => {
-      const storedCourses = JSON.parse(localStorage.getItem("courses")) || [];
-      const foundCourse = storedCourses.find(
-        (c) => c.id === parseInt(courseId)
-      );
-      setCourse(foundCourse);
+      try {
+        const storedCourses = JSON.parse(localStorage.getItem("courses")) || [];
+        const foundCourse = storedCourses.find(
+          (c) => c && c.id === parseInt(courseId)
+        );
+        setCourse(foundCourse);
+      } catch (error) {
+        console.error("Error loading course:", error);
+        setCourse(null);
+      }
     };
 
     const loadLessons = () => {
-      const storedLessons = JSON.parse(localStorage.getItem("lessons")) || [];
-      const courseLessons = storedLessons
-        .filter((lesson) => lesson.courseId === parseInt(courseId))
-        .sort((a, b) => b.id - a.id);
-      setLessons(courseLessons);
+      try {
+        const storedLessons = JSON.parse(localStorage.getItem("lessons")) || [];
+        const courseLessons = storedLessons
+          .filter((lesson) => lesson && lesson.courseId === parseInt(courseId))
+          .filter(
+            (lesson) =>
+              lesson && typeof lesson === "object" && lesson.id && lesson.title
+          )
+          .map((lesson) => ({
+            ...lesson,
+            isPictureMode: lesson.isPictureMode || false,
+            isKeyLocationMode: lesson.isKeyLocationMode || false,
+            isSentenceMode: lesson.isSentenceMode || false,
+            isParagraphMode: lesson.isParagraphMode || false,
+            words: lesson.words || [],
+            newLetters: lesson.newLetters || [],
+            emojiMap: lesson.emojiMap || {},
+            completed: lesson.completed || false,
+          }))
+          .sort((a, b) => b.id - a.id);
+        setLessons(courseLessons);
+      } catch (error) {
+        console.error("Error loading lessons:", error);
+        setLessons([]);
+      }
     };
 
     loadCourse();
@@ -98,15 +123,25 @@ const CourseView = () => {
   };
 
   const getPreviewWords = (words) => {
+    if (!words || !Array.isArray(words) || words.length === 0) {
+      return "No words available";
+    }
     return words.slice(0, 3).join(", ") + (words.length > 3 ? "..." : "");
   };
 
   const getLessonProgress = (lessonId) => {
-    const lessons = JSON.parse(localStorage.getItem("lessons")) || [];
-    const lesson = lessons.find((l) => l.id === lessonId);
-    return {
-      completed: lesson ? lesson.completed : false,
-    };
+    try {
+      const lessons = JSON.parse(localStorage.getItem("lessons")) || [];
+      const lesson = lessons.find((l) => l && l.id === lessonId);
+      return {
+        completed: lesson ? lesson.completed : false,
+      };
+    } catch (error) {
+      console.error("Error getting lesson progress:", error);
+      return {
+        completed: false,
+      };
+    }
   };
 
   if (!course) {
@@ -136,10 +171,10 @@ const CourseView = () => {
         <Flex justify="space-between" align="start">
           <Box flex="1">
             <Heading size="xl" mb={2} color="gray.800">
-              {course.title}
+              {course.title || "Untitled Course"}
             </Heading>
             <Text color="gray.600" fontSize="lg" mb={4}>
-              {course.description}
+              {course.description || "No description available"}
             </Text>
             <HStack spacing={4}>
               <Badge colorScheme="blue" variant="subtle">
@@ -176,7 +211,7 @@ const CourseView = () => {
             variant="outline"
             colorScheme="brand"
             size="lg"
-            onClick={() => navigate(`/course/${courseId}/lessons`)}
+            onClick={() => navigate(`/course/${courseId}`)}
           >
             View All Lessons
           </Button>
@@ -214,11 +249,15 @@ const CourseView = () => {
                       <Flex justify="space-between" align="start">
                         <Box flex="1">
                           <Heading size="md" color="gray.800" mb={1}>
-                            {lesson.title}
+                            {lesson.title || "Untitled Lesson"}
                           </Heading>
                           <Text color="gray.600" fontSize="sm" noOfLines={2}>
-                            {lesson.words.length}{" "}
-                            {lesson.isSentenceMode ? "sentences" : "words"}
+                            {(lesson.words || []).length}{" "}
+                            {lesson.isParagraphMode
+                              ? "lines"
+                              : lesson.isSentenceMode
+                              ? "sentences"
+                              : "words"}
                           </Text>
                         </Box>
                         <HStack spacing={2}>
@@ -282,6 +321,14 @@ const CourseView = () => {
                               </HStack>
                             </Badge>
                           )}
+                          {lesson.isParagraphMode && (
+                            <Badge colorScheme="teal" variant="subtle">
+                              <HStack spacing={1}>
+                                <FiFileText size={12} />
+                                <Text>Paragraph</Text>
+                              </HStack>
+                            </Badge>
+                          )}
                         </HStack>
 
                         {/* Preview Words */}
@@ -290,7 +337,7 @@ const CourseView = () => {
                             Preview:
                           </Text>
                           <Text fontSize="sm" color="gray.700" noOfLines={2}>
-                            {getPreviewWords(lesson.words)}
+                            {getPreviewWords(lesson.words || [])}
                           </Text>
                         </Box>
 

@@ -20,7 +20,7 @@ export const saveStats = (stats) => {
 
 export const updateLessonStats = (lessonStats) => {
   const currentStats = getStats();
-  const { wpm, accuracy, totalWords, totalTime, totalErrors } = lessonStats;
+  const { wpm, accuracy, totalWords, totalTime } = lessonStats;
 
   const newTotalWords = currentStats.wordsTyped + totalWords;
 
@@ -33,8 +33,7 @@ export const updateLessonStats = (lessonStats) => {
       newTotalWords
     ).toFixed(1),
     averageSpeed: (
-      (currentStats.averageSpeed * currentStats.wordsTyped +
-        wpm * totalWords) /
+      (currentStats.averageSpeed * currentStats.wordsTyped + wpm * totalWords) /
       newTotalWords
     ).toFixed(1),
     totalTime: currentStats.totalTime + totalTime,
